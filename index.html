@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <title>Recall Rally</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>Recall Rally</span>
+        </div>
+        <button class="icon-button" data-action="toggle-notifications" aria-label="Open notifications" title="Notifications" aria-expanded="false">
+          <span class="notification-dot"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+        </button>
+        <button class="add-material-button" data-action="open-library">+ Add material</button>
+      </header>
+      <aside class="notification-drawer" data-notification-drawer aria-hidden="true">
+        <div class="notification-drawer-header"><div><p class="eyebrow">Activité récente</p><h2>Notifications</h2></div><button data-action="close-notifications" aria-label="Fermer les notifications">×</button></div>
+        <div class="notification-list" data-notification-list></div>
+      </aside>
+
+      <section class="screen auth-screen" data-screen="auth">
+        <p class="eyebrow">Recall Rally</p>
+        <h1 data-auth-title>Connexion</h1>
+        <p class="library-intro" data-auth-copy>Connecte-toi pour retrouver tes progrès sur tous tes appareils.</p>
+        <form class="auth-form" data-auth-form>
+          <label for="auth-email">Email</label>
+          <input id="auth-email" type="email" autocomplete="email" required />
+          <label for="auth-password">Mot de passe</label>
+          <input id="auth-password" type="password" minlength="8" autocomplete="current-password" required />
+          <button class="primary-button" type="submit"><span data-auth-submit>Se connecter</span><span>→</span></button>
+        </form>
+        <p class="import-feedback" data-auth-feedback aria-live="polite"></p>
+        <button class="text-button auth-toggle" data-action="toggle-auth">Créer un compte</button>
+      </section>
+
+      <section class="screen active" data-screen="home">
+        <div class="welcome-row">
+          <div>
+            <p class="eyebrow" data-current-date>Saturday, September 26</p>
+            <h1>Ready for a<br /><em>quick win?</em></h1>
+          </div>
+          <button class="avatar avatar-button" data-home-avatar data-action="open-profile" aria-label="Open profile"></button>
+        </div>
+
+        <section class="streak-panel" aria-label="Study streak">
+          <div class="streak-copy">
+            <div class="flame">♨</div>
+            <div>
+                <strong data-streak-label>7 day streak</strong>
+                <span data-streak-message>Keep the rally going.</span>
+            </div>
+          </div>
+          <div class="week-dots" data-week-dots aria-label="Weekly streak progress">
+            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+          </div>
+        </section>
+
+        <div class="section-heading">
+          <div><p class="eyebrow">Your next move</p><h2>Daily quest</h2></div>
+          <span class="quest-count">01 / 03</span>
+        </div>
+
+        <button class="quest-card" data-action="daily-challenge">
+          <div class="quest-art" aria-hidden="true"><span class="spark spark-one">+</span><span class="spark spark-two">✦</span><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="planet"></div></div>
+          <div class="quest-content">
+            <div class="tag" data-daily-tag>Astronomy</div>
+            <h3 data-daily-title>Orbit Check</h3>
+            <p data-daily-description>Can you tell a planet from a dwarf?</p>
+            <span class="play-link">Play quest <b>↗</b></span>
+          </div>
+          <div class="quest-meta"><span data-daily-questions>5 Qs</span><span data-daily-xp>+120 XP</span></div>
+        </button>
+
+        <div class="section-heading compact"><div><p class="eyebrow">Your study kit</p><h2>Play your way</h2></div><button class="text-button" data-action="open-library">Manage</button></div>
+        <div class="deck-summary"><div class="deck-icon">▤</div><div><strong data-deck-name>Space basics</strong><small><span data-deck-count>6</span> terms ready to turn into games</small></div><button data-action="open-library" aria-label="Open study kit">→</button></div>
+        <div class="mode-grid">
+          <button class="mode-card coral" data-mode="memory"><span>◒</span><strong>Memory match</strong><small>Pair term + meaning</small></button>
+          <button class="mode-card mint" data-mode="hangman"><span>_</span><strong>Hangman</strong><small>Reveal the answer</small></button>
+          <button class="mode-card yellow" data-mode="duel"><span>⚔</span><strong>Duel</strong><small>Challenge a friend</small></button>
+          <button class="mode-card lavender" data-mode="speed"><span>↯</span><strong>Speed race</strong><small>Beat the clock</small></button>
+          <button class="mode-card blue" data-mode="fill"><span>□</span><strong>Course cloze</strong><small>Complete the lesson excerpt</small></button>
+        </div>
+      </section>
+
+      <section class="screen library-screen" data-screen="library">
+        <div class="section-heading library-heading"><div><p class="eyebrow">Build your study kit</p><h1>Add a document</h1></div><button class="back-button" data-action="go-home" aria-label="Back to home">×</button></div>
+        <p class="library-intro">Bring your notes, then we’ll turn each term and definition into a game.</p>
+        <label class="upload-drop"><input id="document-input" type="file" accept=".txt,.md,.csv,.pdf,.doc,.docx,.pages,text/plain,text/markdown,text/csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /><span class="upload-icon">↑</span><strong>Choose a document</strong><small>TXT, MD, CSV, PDF, DOCX, or Pages · up to 5 MB</small></label>
+        <div class="or-divider"><span>or paste your notes</span></div>
+        <textarea id="document-text" class="document-text" placeholder="Photosynthesis: The process plants use to turn light into energy\nGravity - A force that attracts two bodies\nNebula, A cloud of gas and dust in space"></textarea>
+        <p class="format-note">One pair per line. Separate the term and definition with `:`, ` - `, or a comma.</p>
+        <button class="primary-button" data-action="create-deck">Create study kit <span>→</span></button>
+        <button class="ai-button" data-action="create-ai-deck"><span>✦</span> Build with AI</button>
+        <p class="ai-limit-note">Gemini : 10 générations par jour et par compte.</p>
+        <p class="import-feedback" aria-live="polite"></p>
+        <div class="sample-note"><span>✦</span><div><strong>Need a starting point?</strong><button data-action="load-sample">Load the space basics sample</button></div></div>
+      </section>
+
+      <section class="screen modes-screen" data-screen="modes">
+        <div class="section-heading"><div><p class="eyebrow">Choose a challenge</p><h1 data-mode-heading>Space basics</h1></div><button class="back-button" data-action="go-home" aria-label="Back to home">×</button></div>
+        <p class="library-intro"><span data-deck-count>6</span> terms are ready. Every game uses your study kit.</p>
+        <div class="mode-list"><button class="mode-list-item coral" data-mode="memory"><span>◒</span><div><strong>Memory match</strong><small>Match each term to its definition</small></div><b>→</b></button><button class="mode-list-item mint" data-mode="hangman"><span>_</span><div><strong>Hangman</strong><small>Guess the letters in each term</small></div><b>→</b></button><button class="mode-list-item yellow" data-mode="duel"><span>⚔</span><div><strong>Duel mode</strong><small>Take turns and beat your friend</small></div><b>→</b></button><button class="mode-list-item lavender" data-mode="speed"><span>↯</span><div><strong>Speed race</strong><small>Answer as many as you can in 30 seconds</small></div><b>→</b></button><button class="mode-list-item blue" data-mode="fill"><span>□</span><div><strong>Course cloze</strong><small>Complete a lesson excerpt</small></div><b>→</b></button></div>
+      </section>
+
+      <section class="screen game-screen" data-screen="memory"><div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back to games">←</button><div><p class="eyebrow">Memory match</p><h2>Find the pair</h2></div><span class="game-counter" data-memory-counter>0 / 0</span></div><p class="game-instruction">Match each term with its definition.</p><div class="memory-grid" data-memory-grid></div><p class="game-feedback" data-memory-feedback aria-live="polite"></p></section>
+
+      <section class="screen game-screen" data-screen="hangman"><div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back to games">←</button><div><p class="eyebrow">Hangman</p><h2>Reveal the term</h2></div><span class="game-counter" data-hangman-counter>1 / 5</span></div><div class="hangman-card"><p class="eyebrow">Definition</p><h3 data-hangman-definition></h3><div class="hangman-word" data-hangman-word></div><p class="hangman-status" data-hangman-status></p></div><div class="letter-grid" data-letter-grid></div><button class="primary-button hangman-next" data-action="hangman-next" hidden>Next term <span>→</span></button></section>
+
+      <section class="screen game-screen" data-screen="duel"><div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back aux jeux">←</button><div><p class="eyebrow">Duel</p><h2>Passe le téléphone</h2></div><span class="game-counter" data-duel-turn>Joueur 1</span></div><div class="duel-score"><div><small>JOUEUR 1</small><strong data-score-one>0</strong></div><span>VS</span><div><small>JOUEUR 2</small><strong data-score-two>0</strong></div></div><div class="duel-question"><p class="eyebrow">Quel terme correspond ?</p><h3 data-duel-definition></h3></div><div class="duel-options" data-duel-options></div><p class="game-feedback" data-duel-feedback aria-live="polite"></p></section>
+
+      <section class="screen game-screen" data-screen="speed"><div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back to games">←</button><div><p class="eyebrow">Speed race</p><h2>Beat the clock</h2></div><span class="game-counter speed-timer" data-speed-timer>30s</span></div><div class="speed-meter"><span data-speed-progress></span></div><div class="duel-question speed-question"><p class="eyebrow">Choose the matching term</p><h3 data-speed-definition></h3></div><div class="duel-options" data-speed-options></div><p class="game-feedback" data-speed-feedback aria-live="polite"></p><button class="primary-button speed-start" data-action="start-speed">Start race <span>→</span></button></section>
+
+      <section class="screen game-screen" data-screen="fill"><div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back to games">←</button><div><p class="eyebrow">Course cloze</p><h2>Complete the excerpt</h2></div><span class="game-counter" data-fill-counter>1 / 5</span></div><div class="fill-card"><p class="eyebrow">From your course</p><p class="fill-passage" data-fill-passage></p></div><form class="fill-form" data-fill-form><label for="fill-answer">What belongs in the blank?</label><div class="fill-input-row"><input id="fill-answer" autocomplete="off" placeholder="Type the missing concept" /><button type="submit">Check</button></div></form><p class="game-feedback" data-fill-feedback aria-live="polite"></p><button class="primary-button fill-next" data-action="fill-next" hidden>Next excerpt <span>→</span></button></section>
+
+      <section class="screen quiz-screen" data-screen="quiz">
+        <div class="quiz-top"><button class="back-button" data-action="go-home" aria-label="Back to home">←</button><span>Orbit Check</span><span class="quiz-score">+120 XP</span></div>
+        <div class="progress-track"><span></span></div>
+        <div class="question-meta"><span>QUESTION 1 OF 5</span><span>45 SEC</span></div>
+        <div class="question-card"><span class="question-symbol">✦</span><p class="eyebrow">Astronomy / Warm-up</p><h2>Which object is<br /><em>not</em> a planet?</h2><p class="question-hint">Take a breath. You’ve got this.</p></div>
+        <div class="answers" role="group" aria-label="Answer choices">
+          <button class="answer" data-answer="Mercury"><span>A</span>Mercury</button>
+          <button class="answer" data-answer="Pluto"><span>B</span>Pluto</button>
+          <button class="answer" data-answer="Mars"><span>C</span>Mars</button>
+          <button class="answer" data-answer="Venus"><span>D</span>Venus</button>
+        </div>
+        <p class="answer-feedback" aria-live="polite"></p>
+        <button class="continue-button" data-action="continue" disabled>Choose an answer</button>
+      </section>
+
+      <section class="screen topics-screen" data-screen="topics">
+        <div class="section-heading"><div><p class="eyebrow">Choose your lane</p><h1>All topics</h1></div></div>
+        <div class="topic-list"><button class="topic-list-item coral"><span>⌛</span><div><strong>History</strong><small>12 quests · 480 XP available</small></div><b>→</b></button><button class="topic-list-item mint"><span>◌</span><div><strong>Science</strong><small>8 quests · 320 XP available</small></div><b>→</b></button><button class="topic-list-item yellow"><span>Aa</span><div><strong>Language</strong><small>15 quests · 600 XP available</small></div><b>→</b></button></div>
+      </section>
+
+      <section class="screen profile-screen" data-screen="profile">
+        <div class="section-heading profile-heading"><div><p class="eyebrow">Your space</p><h1>Profile</h1></div><button class="avatar avatar-button" data-profile-heading-avatar data-action="open-avatar-picker" aria-label="Change avatar"></button></div>
+        <div class="profile-card"><button class="profile-avatar avatar-button" data-profile-avatar data-action="open-avatar-picker" aria-label="Change avatar"></button><div><strong data-profile-name>Study player</strong><small data-profile-stats>7 day streak · 1,240 XP</small></div></div>
+        <div class="xp-progress"><div class="xp-progress-top"><strong data-level-label>Level 1</strong><span data-xp-label>0 / 500 XP</span></div><div class="xp-track"><span data-xp-progress></span></div></div>
+        <div class="settings-heading"><p class="eyebrow">Preferences</p><h2>Settings</h2></div>
+        <div class="setting-row"><div><strong>Language</strong><small>Choose the language of the interface</small></div><div class="language-toggle"><button data-language="fr">Français</button><button data-language="en">English</button></div></div>
+        <div class="setting-row nickname-setting"><div><strong>Display name</strong><small>Shown on your local profile</small></div><div class="nickname-control"><input id="nickname-input" maxlength="24" placeholder="Your name" /><button data-action="save-nickname">Save</button></div></div>
+        <div class="setting-row avatar-setting"><div><strong>Avatar</strong><small>Choose one of eight fixed characters</small></div><div class="avatar-options"><button data-avatar="robot-01" aria-label="Robot 1"></button><button data-avatar="robot-02" aria-label="Robot 2"></button><button data-avatar="robot-03" aria-label="Robot 3"></button><button data-avatar="robot-04" aria-label="Robot 4"></button><button data-avatar="adventurer-01" aria-label="Adventurer"></button><button data-avatar="pixel-01" aria-label="Pixel character"></button><button data-avatar="lorelei-01" aria-label="Lorelei character"></button><button data-avatar="fun-01" aria-label="Fun character"></button></div></div>
+        <div class="setting-row" data-setting="app-notifications"><div><strong>App notifications</strong><small>Show feedback and daily reminders inside Recall Rally</small></div><button class="setting-switch active" data-action="toggle-app-notifications" aria-pressed="true">On</button></div>
+        <div class="setting-row" data-setting="browser-notifications"><div><strong>Browser notifications</strong><small>Allow Recall Rally to notify you in this browser</small></div><button class="setting-switch" data-action="enable-browser-notifications">Enable</button></div>
+      </section>
+
+      <nav class="bottom-nav" aria-label="Main navigation"><button class="nav-item active" data-nav="home"><span>⌂</span>Today</button><button class="nav-item" data-nav="modes"><span>✦</span>Games</button><button class="nav-item" data-nav="library"><span>＋</span>Add</button><button class="nav-item" data-nav="profile"><span>◉</span>Profile</button></nav>
+    </main>
+    <div class="in-app-toast" data-in-app-toast role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
