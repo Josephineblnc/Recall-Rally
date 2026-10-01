@@ -1,14 +1,14 @@
-import { isAnswerCorrect, modeQueue } from './game-logic.js';
+import { clozePassage, isAnswerCorrect, modeQueue, normalizeForComparison } from './game-logic.js';
 
 const screens = document.querySelectorAll('.screen');
 const navItems = document.querySelectorAll('.nav-item');
 const sampleDeck = [
-  { term: 'Orbite', definition: "Trajectoire courbe d'un objet autour d'une étoile ou d'une planète" },
-  { term: 'Nébuleuse', definition: "Nuage de gaz et de poussière flottant dans l'espace" },
-  { term: 'Gravité', definition: 'Force qui attire les objets les uns vers les autres' },
-  { term: 'Galaxie', definition: "Immense ensemble d'étoiles, de gaz et de poussière" },
-  { term: 'Astéroïde', definition: 'Objet rocheux qui se déplace autour du Soleil' },
-  { term: 'Éclipse', definition: "Quand un objet spatial bloque la lumière d'un autre" }
+  { term: 'Orbite', definition: "Trajectoire courbe d'un objet autour d'une étoile ou d'une planète", context: "Les planètes suivent une orbite autour du Soleil, tandis que la Lune suit celle de la Terre." },
+  { term: 'Nébuleuse', definition: "Nuage de gaz et de poussière flottant dans l'espace", context: 'Une nébuleuse est un vaste nuage de gaz et de poussière où naissent parfois de nouvelles étoiles.' },
+  { term: 'Gravité', definition: 'Force qui attire les objets les uns vers les autres', context: 'La gravité attire les objets les uns vers les autres et maintient les planètes autour du Soleil.' },
+  { term: 'Galaxie', definition: "Immense ensemble d'étoiles, de gaz et de poussière", context: 'Notre galaxie, la Voie lactée, rassemble des milliards d’étoiles, ainsi que du gaz et de la poussière.' },
+  { term: 'Astéroïde', definition: 'Objet rocheux qui se déplace autour du Soleil', context: 'Un astéroïde est un petit corps rocheux qui se déplace autour du Soleil.' },
+  { term: 'Éclipse', definition: "Quand un objet spatial bloque la lumière d'un autre", context: 'Lors d’une éclipse, un astre passe devant un autre et bloque sa lumière.' }
 ];
 function readStoredJSON(key, fallback) {
   try {
@@ -25,11 +25,18 @@ function validPair(pair) {
 
 function normalizeDeck(value) {
   if (!Array.isArray(value)) return [...sampleDeck];
-  const validDeck = value.filter(validPair).map((pair) => ({
-    term: pair.term.trim().slice(0, 200),
-    definition: pair.definition.trim().slice(0, 1000),
-    ...(typeof pair.context === 'string' ? { context: pair.context.slice(0, 2000) } : {})
-  }));
+  const validDeck = value.filter(validPair).map((pair) => {
+    const samplePair = sampleDeck.find((sample) =>
+      normalizeForComparison(sample.term) === normalizeForComparison(pair.term) &&
+      normalizeForComparison(sample.definition) === normalizeForComparison(pair.definition)
+    );
+    const context = pair.context?.trim() || samplePair?.context;
+    return {
+      term: pair.term.trim().slice(0, 200),
+      definition: pair.definition.trim().slice(0, 1000),
+      ...(typeof context === 'string' ? { context: context.slice(0, 2000) } : {})
+    };
+  });
   return validDeck.length >= 2 ? validDeck : [...sampleDeck];
 }
 
@@ -313,7 +320,7 @@ function translateInterface() {
   const setMany = (selector, texts) => $$(selector).forEach((element, index) => { if (texts[index]) element.textContent = texts[index]; });
   setText('.add-material-button', '+ Ajouter');
   setText('.welcome-row .eyebrow', 'Samedi 26 septembre');
-  setText('.welcome-row h1', 'Prêt pour une petite victoire ?');
+  $('.welcome-row h1').innerHTML = 'Prêt pour une<br><em>petite victoire ?</em>';
   updateStreakUI();
   setText('.section-heading:not(.compact) .eyebrow', 'À toi de jouer');
   setText('.section-heading:not(.compact) h2', 'Défi du jour');
@@ -530,18 +537,19 @@ function startHangman() {
 }
 
 function renderHangman() {
-  const answer = hangmanState.pair.term.toUpperCase();
-  const solved = [...answer].every((letter) => letter === ' ' || hangmanState.guessed.includes(letter));
+  const answer = hangmanState.pair.term.normalize('NFC').toLocaleUpperCase(language === 'fr' ? 'fr-FR' : 'en-US');
+  const guessed = new Set(hangmanState.guessed.map(normalizeForComparison));
+  const solved = [...answer].every((letter) => letter === ' ' || guessed.has(normalizeForComparison(letter)));
   const finished = solved || hangmanState.tries === 0;
   $('[data-hangman-definition]').textContent = hangmanState.pair.definition;
-  $('[data-hangman-word]').innerHTML = [...answer].map((letter) => letter === ' ' ? '<i class="word-space"></i>' : `<span>${hangmanState.guessed.includes(letter) ? escapeHTML(letter) : '_'}</span>`).join('');
+  $('[data-hangman-word]').innerHTML = [...answer].map((letter) => letter === ' ' ? '<i class="word-space"></i>' : `<span>${guessed.has(normalizeForComparison(letter)) ? escapeHTML(letter) : '_'}</span>`).join('');
   $('[data-hangman-counter]').textContent = `${hangmanState.round} / ${hangmanState.total} · ${hangmanState.tries} essais`;
   $('[data-hangman-status]').textContent = solved ? 'Correct !' : (hangmanState.tries === 0 ? `La réponse était ${hangmanState.pair.term}.` : '');
   if (solved && !hangmanState.roundRewarded) { hangmanState.score += 1; hangmanState.roundRewarded = true; recordStudyActivity(); }
   const next = $('[data-action="hangman-next"]');
   next.hidden = !finished;
   next.textContent = hangmanState.round >= hangmanState.total ? 'Voir le résultat  →' : 'Terme suivant  →';
-  $$('.letter-button').forEach((button) => { button.disabled = hangmanState.guessed.includes(button.textContent); });
+  $$('.letter-button').forEach((button) => { button.disabled = guessed.has(normalizeForComparison(button.textContent)); });
 }
 
 function buildLetters() {
@@ -550,7 +558,7 @@ function buildLetters() {
     const letter = button.textContent;
     if (hangmanState.guessed.includes(letter) || hangmanState.tries === 0) return;
     hangmanState.guessed.push(letter);
-    if (!hangmanState.pair.term.toUpperCase().includes(letter)) hangmanState.tries -= 1;
+    if (!normalizeForComparison(hangmanState.pair.term).includes(normalizeForComparison(letter))) hangmanState.tries -= 1;
     renderHangman();
   }));
 }
@@ -770,7 +778,7 @@ function nextFillQuestion() {
   if (!fillState.queue.length || (fillState.round === 1 && fillState.pair)) fillState.queue = freshPairQueue('fill');
   fillState.pair = fillState.queue.shift();
   const answer = fillState.pair.term;
-  const passage = fillState.pair.context || `Dans ce cours, ${answer} est important parce que ${fillState.pair.definition}.`;
+  const passage = clozePassage(fillState.pair, language);
   const maskedPassage = maskClozeTerm(passage, answer);
   $('[data-fill-counter]').textContent = `${fillState.round} / ${fillState.total}`;
   $('[data-fill-passage]').innerHTML = maskedPassage;

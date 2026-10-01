@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { normalizeForComparison, modeQueue, isAnswerCorrect } from '../game-logic.js';
+import { clozePassage, normalizeForComparison, modeQueue, isAnswerCorrect } from '../game-logic.js';
 
 test('normalizeForComparison ignores accents and case', () => {
   assert.equal(normalizeForComparison('Éclipse'), 'eclipse');
@@ -27,4 +27,11 @@ test('modeQueue varies generated order by mode and session', () => {
 test('isAnswerCorrect accepts accented and unaccented equivalents', () => {
   assert.equal(isAnswerCorrect('Nébuleuse', 'Nebuleuse'), true);
   assert.equal(isAnswerCorrect('  étoile ', 'Etoile'), true);
+  assert.equal(isAnswerCorrect('E', 'É'), true);
+});
+
+test('clozePassage keeps useful context and gives a clear fallback', () => {
+  assert.equal(clozePassage({ term: 'Éclipse', definition: 'Un astre en masque un autre', context: 'Lors d’une éclipse, un astre bloque la lumière.' }), 'Lors d’une éclipse, un astre bloque la lumière.');
+  assert.equal(clozePassage({ term: 'Orbite', definition: 'Trajectoire autour d’un astre' }), 'Le terme « Orbite » désigne la notion suivante : Trajectoire autour d’un astre.');
+  assert.equal(clozePassage({ term: 'Orbit', definition: 'A path around an object' }, 'en'), 'The term "Orbit" refers to the following concept: A path around an object.');
 });

@@ -12,6 +12,17 @@ export function isAnswerCorrect(input, expected) {
   return normalizeForComparison(input) === normalizeForComparison(expected);
 }
 
+export function clozePassage(pair, language = 'fr') {
+  const term = String(pair?.term || '').trim();
+  const definition = String(pair?.definition || '').trim();
+  const context = typeof pair?.context === 'string' ? pair.context.trim() : '';
+  const normalizedTerm = normalizeForComparison(term);
+  if (context && normalizedTerm && normalizeForComparison(context).includes(normalizedTerm)) return context;
+  return language === 'fr'
+    ? `Le terme « ${term} » désigne la notion suivante : ${definition}.`
+    : `The term "${term}" refers to the following concept: ${definition}.`;
+}
+
 const modeCounters = new Map();
 
 function stableHash(value = '') {
