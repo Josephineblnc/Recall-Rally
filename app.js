@@ -325,8 +325,8 @@ function translateInterface() {
   setText('.section-heading.compact h2', 'Joue à ta façon');
   setText('.section-heading.compact .text-button', 'Gérer');
   setText('.deck-summary small', `${deck.length} notions prêtes à jouer`);
-  setMany('.mode-card strong', ['Memory', 'Pendu', 'Duel', 'Course express', 'Texte à trous']);
-  setMany('.mode-card small', ['Associe terme et définition', 'Révèle la réponse', 'Défie un ami', 'Bats le chrono', "Complète l'extrait du cours"]);
+  setMany('.mode-card strong', ['Memory', 'Pendu', 'Duel', 'Course express', 'Texte à trous', 'Cartes mémoire']);
+  setMany('.mode-card small', ['Associe terme et définition', 'Révèle la réponse', 'Défie un ami', 'Bats le chrono', "Complète l'extrait du cours", 'Révise avec des cartes']);
   setText('.library-screen .eyebrow', 'Construis ta fiche');
   setText('.library-screen h1', 'Ajouter un document');
   setText('.library-intro', 'Ajoute ton cours : nous transformerons chaque notion en jeu.');
@@ -341,8 +341,8 @@ function translateInterface() {
   setText('[data-action="load-sample"]', "Charger l'exemple astronomie");
   setText('.modes-screen .eyebrow', 'Choisis un défi');
   setText('.modes-screen .library-intro', `${deck.length} notions sont prêtes. Tous les jeux utilisent ta fiche.`);
-  setMany('.mode-list-item strong', ['Memory', 'Pendu', 'Duel', 'Course express', 'Texte à trous']);
-  setMany('.mode-list-item small', ['Associe chaque terme à sa définition', 'Devine les lettres du terme', 'Joue à tour de rôle avec un ami', 'Réponds en 30 secondes', 'Complète un extrait du cours']);
+  setMany('.mode-list-item strong', ['Memory', 'Pendu', 'Duel', 'Course express', 'Texte à trous', 'Cartes mémoire']);
+  setMany('.mode-list-item small', ['Associe chaque terme à sa définition', 'Devine les lettres du terme', 'Joue à tour de rôle avec un ami', 'Réponds en 30 secondes', 'Complète un extrait du cours', 'Révise terme après terme']);
   setText('[data-screen="memory"] .eyebrow', 'Memory');
   setText('[data-screen="memory"] h2', 'Trouve les paires');
   setText('[data-screen="memory"] .game-instruction', 'Associe chaque terme à sa définition.');
@@ -360,6 +360,7 @@ function translateInterface() {
   setText('[data-screen="fill"] h2', "Complète l'extrait");
   setText('[data-screen="fill"] .fill-form label', 'Que faut-il mettre dans le blanc ?');
   setText('[data-screen="fill"] .fill-input-row button', 'Vérifier');
+  setText('[data-screen="flashcards"] .game-header .eyebrow', 'Cartes mémoire');
   $('#fill-answer').placeholder = 'Écris le concept manquant';
   setText('[data-action="fill-next"]', 'Extrait suivant →');
   setMany('.nav-item', ['Accueil', 'Jeux', 'Ajouter', 'Profil']);
@@ -401,7 +402,8 @@ function showSessionSummary(summary) {
     hangman: { label: 'Pendu', title: 'Partie terminée' },
     duel: { label: 'Duel', title: 'Fin du duel' },
     speed: { label: 'Course express', title: 'Course terminée' },
-    fill: { label: 'Texte à trous', title: 'Extrait terminé' }
+    fill: { label: 'Texte à trous', title: 'Extrait terminé' },
+    flashcards: { label: language === 'fr' ? 'Cartes mémoire' : 'Flashcards', title: language === 'fr' ? 'Révision terminée' : 'Review complete' }
   }[summary.mode] || { label: 'Jeu', title: 'Session terminée' };
   const total = Number(summary.total) || 0;
   const correct = Number(summary.correct) || 0;
@@ -703,8 +705,8 @@ function renderFlashcard() {
       total: Math.max(flashcardsState.known + flashcardsState.review, 1),
       errors: flashcardsState.review,
       badges: [
-        { label: 'Connus', value: flashcardsState.known },
-        { label: 'À revoir', value: flashcardsState.review },
+        { label: language === 'fr' ? 'Connus' : 'Known', value: flashcardsState.known },
+        { label: language === 'fr' ? 'À revoir' : 'To review', value: flashcardsState.review },
         { label: 'XP', value: `+${flashcardsState.known * 10}` }
       ]
     });
@@ -716,7 +718,7 @@ function renderFlashcard() {
   $('[data-flashcard-front]').textContent = pair.term;
   $('[data-flashcard-back]').textContent = pair.definition;
   $('[data-flashcard-back]').hidden = !isRevealed;
-  $('[data-flashcard-label]').textContent = isRevealed ? 'Definition' : 'Term';
+  $('[data-flashcard-label]').textContent = isRevealed ? 'Définition' : 'Terme';
 }
 
 function advanceFlashcard(status) {
@@ -733,8 +735,8 @@ function advanceFlashcard(status) {
       total: Math.max(queue.length, 1),
       errors: flashcardsState.review,
       badges: [
-        { label: 'Connus', value: flashcardsState.known },
-        { label: 'À revoir', value: flashcardsState.review },
+        { label: language === 'fr' ? 'Connus' : 'Known', value: flashcardsState.known },
+        { label: language === 'fr' ? 'À revoir' : 'To review', value: flashcardsState.review },
         { label: 'XP', value: `+${flashcardsState.known * 10}` }
       ]
     });
@@ -883,6 +885,9 @@ document.querySelector('[data-action="create-ai-deck"]').addEventListener('click
     if (!Array.isArray(result.pairs) || result.pairs.length < 2 || result.pairs.some((pair) => !validPair(pair))) throw new Error('La réponse générée est invalide.');
     setDeck(result.pairs, result.name);
     feedback.textContent = `${result.pairs.length} notions prêtes. Ta fiche Gemini est disponible.`;
+    button.disabled = false;
+    button.classList.remove('loading');
+    button.innerHTML = '<span>✦</span> Créer avec Gemini';
     setTimeout(openModes, 700);
   } catch (error) {
     const quotaReached = /Limite Gemini/i.test(error.message);

@@ -15,9 +15,7 @@
     <main class="app-shell">
       <header class="topbar">
         <div class="brand-lockup">
-          <img class="brand-logo" src="/logo.svg" alt="Recall Rally logo" />
-          <span class="brand-mark" aria-hidden="true">✦</span>
-          <span>Recall Rally</span>
+          <img class="brand-logo" src="/logo.svg" alt="Recall Rally" />
         </div>
         <button class="icon-button" data-action="toggle-notifications" aria-label="Open notifications" title="Notifications" aria-expanded="false">
           <span class="notification-dot"></span>
@@ -127,19 +125,19 @@
       <section class="screen game-screen" data-screen="fill"><div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back to games">←</button><div><p class="eyebrow">Course cloze</p><h2>Complete the excerpt</h2></div><span class="game-counter" data-fill-counter>1 / 5</span></div><div class="fill-card"><p class="eyebrow">From your course</p><p class="fill-passage" data-fill-passage></p></div><form class="fill-form" data-fill-form><label for="fill-answer">What belongs in the blank?</label><div class="fill-input-row"><input id="fill-answer" autocomplete="off" placeholder="Type the missing concept" /><button type="submit">Check</button></div></form><p class="game-feedback" data-fill-feedback aria-live="polite"></p><button class="primary-button fill-next" data-action="fill-next" hidden>Next excerpt <span>→</span></button></section>
 
       <section class="screen game-screen" data-screen="flashcards">
-        <div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Back to games">←</button><div><p class="eyebrow">Flashcards</p><h2>Classic review</h2></div><span class="game-counter" data-flashcard-counter>1 / 1</span></div>
+        <div class="game-header"><button class="back-button" data-action="open-modes" aria-label="Retour aux jeux">←</button><div><p class="eyebrow">Flashcards</p><h2>Révision classique</h2></div><span class="game-counter" data-flashcard-counter>1 / 1</span></div>
         <div class="flashcard-card">
-          <p class="eyebrow" data-flashcard-label>Term</p>
-          <h3 data-flashcard-front>Term</h3>
-          <p class="flashcard-back" data-flashcard-back hidden>Definition</p>
+          <p class="eyebrow" data-flashcard-label>Terme</p>
+          <h3 data-flashcard-front>Terme</h3>
+          <p class="flashcard-back" data-flashcard-back hidden>Définition</p>
         </div>
         <div class="flashcard-actions">
-          <button class="secondary-button" data-action="flashcard-reveal">Reveal answer</button>
-          <button class="primary-button flashcard-next" data-action="flashcard-next">Next card <span>→</span></button>
+          <button class="secondary-button" data-action="flashcard-reveal">Révéler la réponse</button>
+          <button class="primary-button flashcard-next" data-action="flashcard-next">Carte suivante <span>→</span></button>
         </div>
         <div class="flashcard-rating" data-flashcard-rating>
-          <button class="rating-button review" data-action="flashcard-again">Again</button>
-          <button class="rating-button known" data-action="flashcard-known">Known</button>
+          <button class="rating-button review" data-action="flashcard-again">Encore</button>
+          <button class="rating-button known" data-action="flashcard-known">Connu</button>
         </div>
       </section>
 
@@ -185,7 +183,7 @@
         <div class="setting-row"><div><strong>Language</strong><small>Choose the language of the interface</small></div><div class="language-toggle"><button data-language="fr">Français</button><button data-language="en">English</button></div></div>
         <div class="setting-row nickname-setting"><div><strong>Display name</strong><small>Shown on your local profile</small></div><div class="nickname-control"><input id="nickname-input" maxlength="24" placeholder="Your name" /><button data-action="save-nickname">Save</button></div></div>
         <div class="setting-row avatar-setting"><div><strong>Avatar</strong><small>Choose one of eight fixed characters</small></div><div class="avatar-options"><button data-avatar="robot-01" aria-label="Robot 1"></button><button data-avatar="robot-02" aria-label="Robot 2"></button><button data-avatar="robot-03" aria-label="Robot 3"></button><button data-avatar="robot-04" aria-label="Robot 4"></button><button data-avatar="adventurer-01" aria-label="Adventurer"></button><button data-avatar="pixel-01" aria-label="Pixel character"></button><button data-avatar="lorelei-01" aria-label="Lorelei character"></button><button data-avatar="fun-01" aria-label="Fun character"></button></div></div>
-        <div class="setting-row support-setting"><div><strong>Contact support</strong><small>Need help or want to report a bug?</small></div><a class="support-button" href="mailto:hello@recallrally.app?subject=Recall%20Rally%20support">Email us</a></div>
+        <div class="setting-row support-setting"><div><strong>Contact support</strong><small>Need help or want to report a bug?</small></div><a class="support-button" href="mailto:contact.clairiastudio@gmail.com?subject=Recall%20Rally%20support">Email us</a></div>
         <div class="setting-row" data-setting="app-notifications"><div><strong>App notifications</strong><small>Show feedback and daily reminders inside Recall Rally</small></div><button class="setting-switch active" data-action="toggle-app-notifications" aria-pressed="true">On</button></div>
         <div class="setting-row" data-setting="browser-notifications"><div><strong>Browser notifications</strong><small>Allow Recall Rally to notify you in this browser</small></div><button class="setting-switch" data-action="enable-browser-notifications">Enable</button></div>
       </section>
