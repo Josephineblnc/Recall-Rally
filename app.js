@@ -1,3 +1,5 @@
+import { isAnswerCorrect, modeQueue } from './game-logic.js';
+
 const screens = document.querySelectorAll('.screen');
 const navItems = document.querySelectorAll('.nav-item');
 const sampleDeck = [
@@ -41,6 +43,8 @@ let duelState = {};
 let speedState = {};
 let selectedDocumentFile = null;
 let fillState = {};
+let flashcardsState = {};
+let summaryState = {};
 let language = localStorage.getItem('recall-rally-language') || 'fr';
 let nickname = localStorage.getItem('recall-rally-nickname') || 'Study player';
 const avatarChoices = {
@@ -95,15 +99,15 @@ function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-function freshPairQueue() {
-  return shuffle(deck);
+function freshPairQueue(mode = null) {
+  return mode ? modeQueue(deck, mode) : shuffle(deck);
 }
 
 function dailyChallenge() {
   if (deck.length === 0) return { mode: 'memory', copy: ['Memory', 'Paire express', 'Ajoute au moins deux notions pour commencer.'], questions: 0, xp: 0 };
   const today = dateKey();
   const seed = [...today].reduce((total, character) => total + character.charCodeAt(0), 0);
-  const modes = ['memory', 'hangman', 'duel', 'speed', 'fill'];
+  const modes = ['memory', 'hangman', 'duel', 'speed', 'fill', 'flashcards'];
   const mode = modes[seed % modes.length];
   const pair = deck[seed % deck.length];
   const french = language === 'fr';
@@ -139,6 +143,7 @@ function startMode(mode, fromDailyChallenge = false) {
   if (mode === 'duel') startDuel();
   if (mode === 'speed') showScreen('speed');
   if (mode === 'fill') startFill();
+  if (mode === 'flashcards') startFlashcards();
 }
 
 function dateKey(date = new Date()) {
@@ -390,6 +395,56 @@ function applyLanguage() {
   $$('[data-language]').forEach((button) => button.classList.toggle('active', button.dataset.language === language));
 }
 
+function showSessionSummary(summary) {
+  const config = {
+    memory: { label: 'Memory', title: 'Session réussie' },
+    hangman: { label: 'Pendu', title: 'Partie terminée' },
+    duel: { label: 'Duel', title: 'Fin du duel' },
+    speed: { label: 'Course express', title: 'Course terminée' },
+    fill: { label: 'Texte à trous', title: 'Extrait terminé' }
+  }[summary.mode] || { label: 'Jeu', title: 'Session terminée' };
+  const total = Number(summary.total) || 0;
+  const correct = Number(summary.correct) || 0;
+  const errors = Number(summary.errors) || Math.max(total - correct, 0);
+  const percentage = total ? Math.round((correct / total) * 100) : 0;
+  summaryState = { ...summary, total, correct, errors, percentage };
+  $('[data-summary-label]').textContent = config.label;
+  $('[data-summary-title]').textContent = config.title;
+  $('[data-summary-score]').textContent = correct;
+  $('[data-summary-total]').textContent = `${correct} / ${total}`;
+  $('[data-summary-correct]').textContent = correct;
+  $('[data-summary-errors]').textContent = errors;
+  $('[data-summary-accuracy]').textContent = `${percentage}%`;
+  const list = $('[data-summary-list]');
+  const items = summary.badges || [
+    { label: 'Bonnes réponses', value: correct },
+    { label: 'Erreurs', value: errors },
+    { label: 'Score', value: `${correct} pts` }
+  ];
+  list.innerHTML = items.map((item) => `<div class="summary-item"><span>${escapeHTML(item.label)}</span><strong>${escapeHTML(String(item.value))}</strong></div>`).join('');
+  showScreen('summary');
+}
+
+function setLanguagePreference(nextLanguage) {
+  if (!['fr', 'en'].includes(nextLanguage)) return;
+  language = nextLanguage;
+  localStorage.setItem('recall-rally-language', language);
+  syncProgress();
+  applyLanguage();
+}
+
+function updateImportPreview() {
+  const pairs = parseDocument($('#document-text').value);
+  const feedback = $('.import-feedback');
+  if (!pairs.length) {
+    if (feedback) feedback.textContent = '';
+    return;
+  }
+  if (feedback) {
+    feedback.textContent = `${pairs.length} notion${pairs.length > 1 ? 's' : ''} détectée${pairs.length > 1 ? 's' : ''}.`;
+  }
+}
+
 function parseDocument(text) {
   return text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => {
     const match = line.match(/^(.+?)\s*(?::|\s-\s|,|\t)\s*(.+)$/);
@@ -418,7 +473,7 @@ function openModes() {
 
 function startMemory() {
   memorySelection = [];
-  const memoryDeck = shuffle(deck).slice(0, Math.min(deck.length, 6));
+  const memoryDeck = freshPairQueue('memory').slice(0, Math.min(deck.length, 6));
   memoryCards = shuffle(memoryDeck.flatMap((pair, index) => [
     { id: `${index}-term`, pair: index, text: pair.term, type: 'term' },
     { id: `${index}-definition`, pair: index, text: pair.definition, type: 'definition' }
@@ -440,9 +495,23 @@ function chooseMemory(element) {
     first.element.classList.add('matched');
     second.element.classList.add('matched');
     const matches = $$('.memory-card.matched').length / 2;
-    $('[data-memory-counter]').textContent = `${matches} / ${memoryCards.length / 2}`;
-    $('[data-memory-feedback]').textContent = matches === memoryCards.length / 2 ? 'Fiche maîtrisée. Bravo !' : 'Paire trouvée.';
-    if (matches === memoryCards.length / 2) recordStudyActivity();
+    const totalPairs = memoryCards.length / 2;
+    $('[data-memory-counter]').textContent = `${matches} / ${totalPairs}`;
+    $('[data-memory-feedback]').textContent = matches === totalPairs ? 'Fiche maîtrisée. Bravo !' : 'Paire trouvée.';
+    if (matches === totalPairs) {
+      recordStudyActivity();
+      showSessionSummary({
+        mode: 'memory',
+        correct: totalPairs,
+        total: totalPairs,
+        errors: 0,
+        badges: [
+          { label: 'Paires trouvées', value: totalPairs },
+          { label: 'Erreurs', value: 0 },
+          { label: 'XP', value: '+50' }
+        ]
+      });
+    }
     memorySelection = [];
   } else {
     $('[data-memory-feedback]').textContent = 'Ces deux cartes ne vont pas ensemble.';
@@ -451,7 +520,7 @@ function chooseMemory(element) {
 }
 
 function startHangman() {
-  hangmanState = { queue: freshPairQueue(), guessed: [], tries: 5, round: 1, total: Math.min(deck.length, 5), score: 0, roundRewarded: false };
+  hangmanState = { queue: freshPairQueue('hangman'), guessed: [], tries: 5, round: 1, total: Math.min(deck.length, 8), score: 0, roundRewarded: false };
   hangmanState.pair = hangmanState.queue.shift();
   $('[data-hangman-definition]').textContent = hangmanState.pair.definition;
   renderHangman();
@@ -489,6 +558,17 @@ function nextHangmanRound() {
     $('[data-hangman-status]').textContent = `Partie terminée : ${hangmanState.score} / ${hangmanState.total} bonne(s) réponse(s).`;
     $('[data-action="hangman-next"]').textContent = 'Rejouer  →';
     hangmanState.summaryShown = true;
+    showSessionSummary({
+      mode: 'hangman',
+      correct: hangmanState.score,
+      total: hangmanState.total,
+      errors: hangmanState.total - hangmanState.score,
+      badges: [
+        { label: 'Bonnes réponses', value: hangmanState.score },
+        { label: 'Erreurs', value: hangmanState.total - hangmanState.score },
+        { label: 'XP', value: `+${hangmanState.score * 20}` }
+      ]
+    });
     return;
   }
   if (hangmanState.round >= hangmanState.total) { buildLetters(); startHangman(); return; }
@@ -502,7 +582,7 @@ function nextHangmanRound() {
 }
 
 function nextDuelQuestion() {
-  if (!duelState.queue.length) duelState.queue = freshPairQueue();
+  if (!duelState.queue.length) duelState.queue = freshPairQueue('duel');
   duelState.pair = duelState.queue.shift();
   $('[data-duel-definition]').textContent = duelState.pair.definition;
   const choices = shuffle([duelState.pair, ...shuffle(deck.filter((pair) => pair !== duelState.pair)).slice(0, 3)]);
@@ -511,7 +591,7 @@ function nextDuelQuestion() {
 }
 
 function startDuel() {
-  duelState = { player: 1, scoreOne: 0, scoreTwo: 0, queue: freshPairQueue() };
+  duelState = { player: 1, scoreOne: 0, scoreTwo: 0, queue: freshPairQueue('duel'), rounds: 0, target: Math.min(Math.max(deck.length, 5), 8) };
   $('[data-score-one]').textContent = '0';
   $('[data-score-two]').textContent = '0';
   $('[data-duel-feedback]').textContent = '';
@@ -520,7 +600,8 @@ function startDuel() {
 }
 
 function answerDuel(button) {
-  const correct = button.dataset.answer === duelState.pair.term;
+  const correct = isAnswerCorrect(button.dataset.answer, duelState.pair.term);
+  duelState.rounds += 1;
   if (correct) duelState[duelState.player === 1 ? 'scoreOne' : 'scoreTwo'] += 1;
   if (correct) recordStudyActivity();
   button.classList.add(correct ? 'correct' : 'wrong');
@@ -528,11 +609,31 @@ function answerDuel(button) {
   $('[data-score-two]').textContent = duelState.scoreTwo;
   $('[data-duel-feedback]').textContent = correct ? `Point pour le joueur ${duelState.player} !` : `La réponse était ${duelState.pair.term}.`;
   $$('.duel-option').forEach((option) => { option.disabled = true; });
-  setTimeout(() => { duelState.player = duelState.player === 1 ? 2 : 1; $('[data-duel-turn]').textContent = `Joueur ${duelState.player}`; nextDuelQuestion(); }, 800);
+  const hasFinished = duelState.rounds >= duelState.target;
+  setTimeout(() => {
+    if (hasFinished) {
+      const winnerScore = Math.max(duelState.scoreOne, duelState.scoreTwo);
+      const totalCorrect = duelState.scoreOne + duelState.scoreTwo;
+      const totalRounds = duelState.target;
+      showSessionSummary({
+        mode: 'duel',
+        correct: totalCorrect,
+        total: totalRounds,
+        errors: totalRounds - totalCorrect,
+        badges: [
+          { label: 'Joueur 1', value: duelState.scoreOne },
+          { label: 'Joueur 2', value: duelState.scoreTwo },
+          { label: 'Vainqueur', value: winnerScore }
+        ]
+      });
+      return;
+    }
+    duelState.player = duelState.player === 1 ? 2 : 1; $('[data-duel-turn]').textContent = `Joueur ${duelState.player}`; nextDuelQuestion();
+  }, 800);
 }
 
 function nextSpeedQuestion() {
-  if (!speedState.queue.length) speedState.queue = freshPairQueue();
+  if (!speedState.queue.length) speedState.queue = freshPairQueue('speed');
   speedState.pair = speedState.queue.shift();
   $('[data-speed-definition]').textContent = speedState.pair.definition;
   const choices = shuffle([speedState.pair, ...shuffle(deck.filter((pair) => pair !== speedState.pair)).slice(0, 3)]);
@@ -542,17 +643,17 @@ function nextSpeedQuestion() {
 
 function startSpeed() {
   clearInterval(speedState.timer);
-  speedState = { score: 0, remaining: 30, queue: freshPairQueue() };
+  speedState = { score: 0, remaining: 45, queue: freshPairQueue('speed') };
   $('[data-action="start-speed"]').style.display = 'none';
   $('[data-speed-feedback]').textContent = '';
   $('[data-speed-progress]').style.width = '100%';
   nextSpeedQuestion();
-  speedState.timer = setInterval(() => { speedState.remaining -= 1; $('[data-speed-timer]').textContent = `${speedState.remaining}s`; $('[data-speed-progress]').style.width = `${(speedState.remaining / 30) * 100}%`; if (speedState.remaining <= 0) finishSpeed(); }, 1000);
+  speedState.timer = setInterval(() => { speedState.remaining -= 1; $('[data-speed-timer]').textContent = `${speedState.remaining}s`; $('[data-speed-progress]').style.width = `${(speedState.remaining / 45) * 100}%`; if (speedState.remaining <= 0) finishSpeed(); }, 1000);
 }
 
 function answerSpeed(button) {
   if (speedState.remaining <= 0) return;
-  const correct = button.dataset.answer === speedState.pair.term;
+  const correct = isAnswerCorrect(button.dataset.answer, speedState.pair.term);
   if (correct) speedState.score += 1;
   button.classList.add(correct ? 'correct' : 'wrong');
   $('[data-speed-feedback]').textContent = correct ? `Bravo. ${speedState.score} bonne(s) réponse(s).` : `La réponse était ${speedState.pair.term}.`;
@@ -566,14 +667,80 @@ function finishSpeed() {
   if (speedState.score > 0) recordStudyActivity();
   $('[data-speed-timer]').textContent = 'Done';
   $('[data-speed-feedback]').textContent = `Course terminée : ${speedState.score} bonne(s) réponse(s).`;
+  showSessionSummary({
+    mode: 'speed',
+    correct: speedState.score,
+    total: Math.max(speedState.score, 1),
+    errors: Math.max(0, speedState.score === 0 ? 1 : 0),
+    badges: [
+      { label: 'Bonnes réponses', value: speedState.score },
+      { label: 'Temps restant', value: `${speedState.remaining}s` },
+      { label: 'XP', value: `+${speedState.score * 15}` }
+    ]
+  });
   $('[data-action="start-speed"]').style.display = 'block';
   $('[data-action="start-speed"]').textContent = 'Rejouer  →';
 }
 
 function startFill() {
-  fillState = { round: 1, total: Math.min(deck.length, 5), queue: freshPairQueue() };
+  fillState = { round: 1, total: Math.min(deck.length, 8), queue: freshPairQueue('fill') };
   nextFillQuestion();
   showScreen('fill');
+}
+
+function startFlashcards() {
+  flashcardsState = { queue: freshPairQueue('flashcards'), index: 0, known: 0, review: 0, shown: false };
+  renderFlashcard();
+  showScreen('flashcards');
+}
+
+function renderFlashcard() {
+  const cards = flashcardsState.queue || [];
+  if (!cards.length) {
+    showSessionSummary({
+      mode: 'flashcards',
+      correct: flashcardsState.known,
+      total: Math.max(flashcardsState.known + flashcardsState.review, 1),
+      errors: flashcardsState.review,
+      badges: [
+        { label: 'Connus', value: flashcardsState.known },
+        { label: 'À revoir', value: flashcardsState.review },
+        { label: 'XP', value: `+${flashcardsState.known * 10}` }
+      ]
+    });
+    return;
+  }
+  const pair = cards[flashcardsState.index % cards.length];
+  const isRevealed = flashcardsState.shown;
+  $('[data-flashcard-counter]').textContent = `${flashcardsState.index + 1} / ${cards.length}`;
+  $('[data-flashcard-front]').textContent = pair.term;
+  $('[data-flashcard-back]').textContent = pair.definition;
+  $('[data-flashcard-back]').hidden = !isRevealed;
+  $('[data-flashcard-label]').textContent = isRevealed ? 'Definition' : 'Term';
+}
+
+function advanceFlashcard(status) {
+  const queue = flashcardsState.queue || [];
+  if (!queue.length) return;
+  const current = queue[flashcardsState.index % queue.length];
+  if (status === 'known') flashcardsState.known += 1; else flashcardsState.review += 1;
+  flashcardsState.index += 1;
+  flashcardsState.shown = false;
+  if (flashcardsState.index >= queue.length) {
+    showSessionSummary({
+      mode: 'flashcards',
+      correct: flashcardsState.known,
+      total: Math.max(queue.length, 1),
+      errors: flashcardsState.review,
+      badges: [
+        { label: 'Connus', value: flashcardsState.known },
+        { label: 'À revoir', value: flashcardsState.review },
+        { label: 'XP', value: `+${flashcardsState.known * 10}` }
+      ]
+    });
+    return;
+  }
+  renderFlashcard();
 }
 
 function maskClozeTerm(passage, term) {
@@ -598,7 +765,7 @@ function maskClozeTerm(passage, term) {
 }
 
 function nextFillQuestion() {
-  if (!fillState.queue.length || fillState.round === 1 && fillState.pair) fillState.queue = freshPairQueue();
+  if (!fillState.queue.length || (fillState.round === 1 && fillState.pair)) fillState.queue = freshPairQueue('fill');
   fillState.pair = fillState.queue.shift();
   const answer = fillState.pair.term;
   const passage = fillState.pair.context || `Dans ce cours, ${answer} est important parce que ${fillState.pair.definition}.`;
@@ -617,19 +784,39 @@ function checkFill(event) {
   event.preventDefault();
   if (!fillState.pair) return;
   const answer = $('#fill-answer').value.trim();
-  const correct = answer.toLowerCase() === fillState.pair.term.trim().toLowerCase();
+  const correct = isAnswerCorrect(answer, fillState.pair.term);
   if (correct) recordStudyActivity();
   $('[data-fill-feedback]').textContent = correct ? 'Correct. Bonne mémoire !' : `Pas tout à fait. La réponse était ${fillState.pair.term}.`;
   $('#fill-answer').disabled = true;
   $('[data-fill-form] button').disabled = true;
   $('[data-action="fill-next"]').hidden = false;
   $('[data-action="fill-next"]').textContent = fillState.round >= fillState.total ? 'Rejouer  →' : 'Extrait suivant  →';
+  if (fillState.round >= fillState.total) {
+    const total = fillState.total;
+    const score = Number(fillState.score || 0) + (correct ? 1 : 0);
+    fillState.score = score;
+    showSessionSummary({
+      mode: 'fill',
+      correct: score,
+      total,
+      errors: total - score,
+      badges: [
+        { label: 'Bonnes réponses', value: score },
+        { label: 'Erreurs', value: total - score },
+        { label: 'XP', value: `+${score * 20}` }
+      ]
+    });
+  }
 }
 
 function bindModeButtons() {
   $$('[data-mode]').forEach((button) => button.addEventListener('click', () => {
     startMode(button.dataset.mode);
   }));
+}
+
+function resetFillScore() {
+  fillState.score = 0;
 }
 
 document.querySelector('[data-action="toggle-auth"]').addEventListener('click', () => {
@@ -665,6 +852,12 @@ $$('[data-action="go-home"]').forEach((button) => button.addEventListener('click
 $$('[data-action="open-modes"]').forEach((button) => button.addEventListener('click', openModes));
 document.querySelector('[data-action="daily-challenge"]').addEventListener('click', () => { activeDailyChallenge = true; startMode(dailyChallenge().mode, true); });
 document.querySelector('[data-action="load-sample"]').addEventListener('click', () => { $('#document-text').value = sampleDeck.map((pair) => `${pair.term}: ${pair.definition}`).join('\n'); });
+document.querySelector('[data-action="clear-document"]').addEventListener('click', () => {
+  $('#document-text').value = '';
+  $('#document-input').value = '';
+  selectedDocumentFile = null;
+  $('.import-feedback').textContent = '';
+});
 document.querySelector('[data-action="create-deck"]').addEventListener('click', () => {
   const pairs = parseDocument($('#document-text').value);
   const feedback = $('.import-feedback');
@@ -680,8 +873,8 @@ document.querySelector('[data-action="create-ai-deck"]').addEventListener('click
   if (!selectedDocumentFile && text.length < 10) { feedback.textContent = "Ajoute d'abord du contenu de cours."; return; }
   button.disabled = true;
   button.classList.add('loading');
-  button.innerHTML = '<span>✦</span> Création de tes jeux...';
-  feedback.textContent = '';
+  button.innerHTML = '<span>✦</span> Génération en cours… merci de patienter.';
+  feedback.textContent = 'Génération en cours. Merci de patienter pendant la création de ta fiche…';
   try {
     const request = selectedDocumentFile ? { file: { name: selectedDocumentFile.name, type: selectedDocumentFile.type, data: await fileToBase64(selectedDocumentFile) } } : { text };
     const response = await fetch('/api/generate-deck', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(request) });
@@ -702,9 +895,13 @@ document.querySelector('[data-action="create-ai-deck"]').addEventListener('click
 });
 function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.addEventListener('load', () => resolve(reader.result.split(',')[1])); reader.addEventListener('error', reject); reader.readAsDataURL(file); }); }
 $('#document-input').addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) { selectedDocumentFile = null; return; } if (file.size > 5 * 1024 * 1024) { selectedDocumentFile = null; $('.import-feedback').textContent = 'Ce document dépasse la limite de 5 Mo.'; event.target.value = ''; return; } selectedDocumentFile = file; const textFormats = ['text/plain', 'text/markdown', 'text/csv']; if (textFormats.includes(file.type) || /\.(txt|md|csv)$/i.test(file.name)) { const reader = new FileReader(); reader.addEventListener('load', () => { $('#document-text').value = reader.result; }); reader.readAsText(file); } else { $('#document-text').value = `${file.name} selected. Click Build with AI to turn it into games.`; } });
-$('#document-text').addEventListener('input', () => { selectedDocumentFile = null; $('#document-input').value = ''; });
+$('#document-text').addEventListener('input', () => {
+  selectedDocumentFile = null;
+  $('#document-input').value = '';
+  updateImportPreview();
+});
 $$('[data-nav]').forEach((item) => item.addEventListener('click', () => { if (item.dataset.nav === 'profile') { showScreen('profile'); return; } if (item.dataset.nav === 'library') openLibrary(); else if (item.dataset.nav === 'modes') openModes(); else showScreen('home'); }));
-$$('[data-language]').forEach((button) => button.addEventListener('click', () => { language = button.dataset.language; localStorage.setItem('recall-rally-language', language); syncProgress(); window.location.reload(); }));
+$$('[data-language]').forEach((button) => button.addEventListener('click', () => { setLanguagePreference(button.dataset.language); }));
 document.querySelector('[data-action="save-nickname"]').addEventListener('click', () => { const value = $('#nickname-input').value.trim(); if (!value) return; nickname = value; localStorage.setItem('recall-rally-nickname', nickname); syncProgress(); $('[data-profile-name]').textContent = nickname; renderAvatars(); });
 document.querySelector('[data-action="open-profile"]').addEventListener('click', () => showScreen('profile'));
 $$('[data-action="open-avatar-picker"]').forEach((button) => button.addEventListener('click', () => { showScreen('profile'); $('.avatar-setting').scrollIntoView({ behavior: 'smooth', block: 'center' }); }));
@@ -715,8 +912,13 @@ document.querySelector('[data-action="toggle-notifications"]').addEventListener(
 document.querySelector('[data-action="close-notifications"]').addEventListener('click', () => { $('[data-notification-drawer]').classList.remove('open'); $('[data-notification-drawer]').setAttribute('aria-hidden', 'true'); $('[data-action="toggle-notifications"]').setAttribute('aria-expanded', 'false'); });
 document.querySelector('[data-action="start-speed"]').addEventListener('click', startSpeed);
 document.querySelector('[data-action="hangman-next"]').addEventListener('click', nextHangmanRound);
+document.querySelector('[data-action="flashcard-reveal"]').addEventListener('click', () => { flashcardsState.shown = true; renderFlashcard(); });
+document.querySelector('[data-action="flashcard-next"]').addEventListener('click', () => advanceFlashcard('review'));
+document.querySelector('[data-action="flashcard-known"]').addEventListener('click', () => advanceFlashcard('known'));
+document.querySelector('[data-action="flashcard-again"]').addEventListener('click', () => advanceFlashcard('review'));
 document.querySelector('[data-fill-form]').addEventListener('submit', checkFill);
-document.querySelector('[data-action="fill-next"]').addEventListener('click', () => { if (fillState.round >= fillState.total) fillState.round = 1; else fillState.round += 1; nextFillQuestion(); });
+document.querySelector('[data-action="fill-next"]').addEventListener('click', () => { if (fillState.round >= fillState.total) { fillState.round = 1; resetFillScore(); } else fillState.round += 1; nextFillQuestion(); });
+document.querySelector('[data-action="summary-home"]').addEventListener('click', () => { showScreen('home'); });
 
 applyLanguage();
 $('#nickname-input').value = nickname === 'Study player' ? '' : nickname;

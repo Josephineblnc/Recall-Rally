@@ -1,0 +1,48 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="170" y1="110" x2="850" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2968A"/>
+      <stop offset="1" stop-color="#EE7B67"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#D06D5E" flood-opacity="0.24"/>
+    </filter>
+  </defs>
+
+  <rect x="44" y="44" width="936" height="936" rx="210" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <path d="M371 387C371 348.34 402.34 317 441 317C463.69 317 484.19 326.76 498.16 343.38C510.96 331.46 528.49 324.5 548 324.5C588.88 324.5 622 357.62 622 398.5C622 411.7 619.24 424.25 614.18 435.76C629.02 446.93 640 464.46 640 485C640 519.3 611.3 548 577 548H468.5C408.45 548 360 499.55 360 439.5C360 411.36 373.74 385.96 396.37 367.25C386.19 369.62 371 374.62 371 387Z" fill="#F7D97B"/>
+
+    <path d="M388 484C388 440.98 423.98 405 467 405H521C564.02 405 600 440.98 600 484V486C600 529.02 564.02 565 521 565H467C423.98 565 388 529.02 388 486V484Z" fill="#F5D26A"/>
+
+    <path d="M438 452C438 434.33 452.33 420 470 420H507C524.67 420 539 434.33 539 452V454C539 471.67 524.67 486 507 486H470C452.33 486 438 471.67 438 454V452Z" fill="#F1CF59"/>
+
+    <ellipse cx="457" cy="493" rx="16" ry="13" fill="#202321"/>
+    <ellipse cx="535" cy="493" rx="16" ry="13" fill="#202321"/>
+    <path d="M424 567C468 606 574 608 612 567" stroke="#202321" stroke-width="18" stroke-linecap="round"/>
+
+    <path d="M319 317C289.62 312.45 252.15 310.58 210 319C210 319 208 507 210 558C258.9 575.35 296 551.2 318 530C340 508.8 343 510 355 498C343 458 338 424 335 386C333 368.75 328.82 341.46 319 317Z" fill="#F5D26A"/>
+    <path d="M265 321C302 345 333 309 338 280C343 250 320 226 289 231C251 238 212 268 221 310C227 339 247 333 265 321Z" fill="#F5D26A"/>
+  </g>
+
+  <g transform="translate(540 250) rotate(18 0 0)">
+    <path d="M0 140C0 117.909 17.9086 100 40 100H282C309.614 100 332 122.386 332 150V154C332 181.614 309.614 204 282 204H40C17.9086 204 0 186.091 0 164V140Z" fill="#202321"/>
+    <path d="M0 0H370V100H0V0Z" fill="#202321"/>
+    <path d="M0 100H370V200H0V100Z" fill="#F5F1E8"/>
+    <path d="M0 0H370V100H0V0Z" fill="#F5F1E8"/>
+    <path d="M0 0H370V200H0V0Z" fill="#F5F1E8"/>
+    <path d="M90 0V200M200 0V200M310 0V200M0 50H370M0 150H370" stroke="#202321" stroke-width="15"/>
+    <path d="M0 0H370V200H0V0Z" fill="black" fill-opacity="0"/>
+    <path d="M0 0L370 200" stroke="#202321" stroke-width="14"/>
+    <path d="M370 0L0 200" stroke="#202321" stroke-width="14"/>
+  </g>
+
+  <path d="M480 303L584 280" stroke="#202321" stroke-width="20" stroke-linecap="round"/>
+  <path d="M579 279L612 276" stroke="#202321" stroke-width="20" stroke-linecap="round"/>
+
+  <g transform="translate(150 640)">
+    <text x="0" y="0" font-family="'Arial Rounded MT Bold', 'Trebuchet MS', sans-serif" font-size="210" font-weight="700" letter-spacing="-8" fill="#F7F2EA">Recall</text>
+    <text x="0" y="195" font-family="'Arial Rounded MT Bold', 'Trebuchet MS', sans-serif" font-size="210" font-weight="700" letter-spacing="-8" fill="#F7F2EA">Rally</text>
+  </g>
+</svg>

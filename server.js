@@ -37,7 +37,9 @@ const publicFiles = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
-  ['/styles.css', ['styles.css', 'text/css; charset=utf-8']]
+  ['/game-logic.js', ['game-logic.js', 'text/javascript; charset=utf-8']],
+  ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
+  ['/logo.svg', ['logo.svg', 'image/svg+xml; charset=utf-8']]
 ]);
 
 class HttpError extends Error {
