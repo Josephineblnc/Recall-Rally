@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { clozePassage, normalizeForComparison, modeQueue, isAnswerCorrect } from '../game-logic.js';
+import { clozePassage, normalizeForComparison, modeQueue, isAnswerCorrect, summarizeAnswers } from '../game-logic.js';
 
 test('normalizeForComparison ignores accents and case', () => {
   assert.equal(normalizeForComparison('Éclipse'), 'eclipse');
@@ -34,4 +34,10 @@ test('clozePassage keeps useful context and gives a clear fallback', () => {
   assert.equal(clozePassage({ term: 'Éclipse', definition: 'Un astre en masque un autre', context: 'Lors d’une éclipse, un astre bloque la lumière.' }), 'Lors d’une éclipse, un astre bloque la lumière.');
   assert.equal(clozePassage({ term: 'Orbite', definition: 'Trajectoire autour d’un astre' }), 'Le terme « Orbite » désigne la notion suivante : Trajectoire autour d’un astre.');
   assert.equal(clozePassage({ term: 'Orbit', definition: 'A path around an object' }, 'en'), 'The term "Orbit" refers to the following concept: A path around an object.');
+});
+
+test('summarizeAnswers derives errors and accuracy from attempted answers', () => {
+  assert.deepEqual(summarizeAnswers(3, 5), { correct: 3, total: 5, errors: 2, percentage: 60 });
+  assert.deepEqual(summarizeAnswers(0, 0), { correct: 0, total: 0, errors: 0, percentage: 0 });
+  assert.deepEqual(summarizeAnswers(8, 5), { correct: 5, total: 5, errors: 0, percentage: 100 });
 });

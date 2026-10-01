@@ -1,4 +1,4 @@
-import { clozePassage, isAnswerCorrect, modeQueue, normalizeForComparison } from './game-logic.js';
+import { clozePassage, isAnswerCorrect, modeQueue, normalizeForComparison, summarizeAnswers } from './game-logic.js';
 
 const screens = document.querySelectorAll('.screen');
 const navItems = document.querySelectorAll('.nav-item');
@@ -404,21 +404,22 @@ function applyLanguage() {
 }
 
 function showSessionSummary(summary) {
+  const french = language === 'fr';
   const config = {
-    memory: { label: 'Memory', title: 'Session réussie' },
-    hangman: { label: 'Pendu', title: 'Partie terminée' },
-    duel: { label: 'Duel', title: 'Fin du duel' },
-    speed: { label: 'Course express', title: 'Course terminée' },
-    fill: { label: 'Texte à trous', title: 'Extrait terminé' },
-    flashcards: { label: language === 'fr' ? 'Cartes mémoire' : 'Flashcards', title: language === 'fr' ? 'Révision terminée' : 'Review complete' }
+    memory: french ? { label: 'Memory', title: 'Session réussie' } : { label: 'Memory', title: 'Session complete' },
+    hangman: french ? { label: 'Pendu', title: 'Partie terminée' } : { label: 'Hangman', title: 'Game over' },
+    duel: french ? { label: 'Duel', title: 'Fin du duel' } : { label: 'Duel', title: 'Duel complete' },
+    speed: french ? { label: 'Course express', title: 'Course terminée' } : { label: 'Speed race', title: 'Race complete' },
+    fill: french ? { label: 'Texte à trous', title: 'Extrait terminé' } : { label: 'Course cloze', title: 'Excerpt complete' },
+    flashcards: french ? { label: 'Cartes mémoire', title: 'Révision terminée' } : { label: 'Flashcards', title: 'Review complete' }
   }[summary.mode] || { label: 'Jeu', title: 'Session terminée' };
-  const total = Number(summary.total) || 0;
-  const correct = Number(summary.correct) || 0;
-  const errors = Number(summary.errors) || Math.max(total - correct, 0);
-  const percentage = total ? Math.round((correct / total) * 100) : 0;
+  const { total, correct, errors, percentage } = summarizeAnswers(summary.correct, summary.total);
   summaryState = { ...summary, total, correct, errors, percentage };
   $('[data-summary-label]').textContent = config.label;
   $('[data-summary-title]').textContent = config.title;
+  $$('.summary-metrics small').forEach((label, index) => {
+    label.textContent = (french ? ['Bonnes réponses', 'Erreurs', 'Précision'] : ['Correct', 'Errors', 'Accuracy'])[index];
+  });
   $('[data-summary-score]').textContent = correct;
   $('[data-summary-total]').textContent = `${correct} / ${total}`;
   $('[data-summary-correct]').textContent = correct;
@@ -426,11 +427,13 @@ function showSessionSummary(summary) {
   $('[data-summary-accuracy]').textContent = `${percentage}%`;
   const list = $('[data-summary-list]');
   const items = summary.badges || [
-    { label: 'Bonnes réponses', value: correct },
-    { label: 'Erreurs', value: errors },
+    { label: french ? 'Bonnes réponses' : 'Correct answers', value: correct },
+    { label: french ? 'Erreurs' : 'Errors', value: errors },
     { label: 'Score', value: `${correct} pts` }
   ];
   list.innerHTML = items.map((item) => `<div class="summary-item"><span>${escapeHTML(item.label)}</span><strong>${escapeHTML(String(item.value))}</strong></div>`).join('');
+  $('[data-action="summary-home"]').innerHTML = `${french ? 'Retour à l’accueil' : 'Back to home'} <span>→</span>`;
+  $('[data-screen="summary"] [data-action="go-home"]').setAttribute('aria-label', french ? 'Retour à l’accueil' : 'Back to home');
   showScreen('summary');
 }
 
@@ -653,7 +656,7 @@ function nextSpeedQuestion() {
 
 function startSpeed() {
   clearInterval(speedState.timer);
-  speedState = { score: 0, remaining: 45, queue: freshPairQueue('speed') };
+  speedState = { score: 0, attempts: 0, remaining: 45, queue: freshPairQueue('speed') };
   $('[data-action="start-speed"]').style.display = 'none';
   $('[data-speed-feedback]').textContent = '';
   $('[data-speed-progress]').style.width = '100%';
@@ -664,6 +667,7 @@ function startSpeed() {
 function answerSpeed(button) {
   if (speedState.remaining <= 0) return;
   const correct = isAnswerCorrect(button.dataset.answer, speedState.pair.term);
+  speedState.attempts += 1;
   if (correct) speedState.score += 1;
   button.classList.add(correct ? 'correct' : 'wrong');
   $('[data-speed-feedback]').textContent = correct ? `Bravo. ${speedState.score} bonne(s) réponse(s).` : `La réponse était ${speedState.pair.term}.`;
@@ -675,13 +679,13 @@ function finishSpeed() {
   clearInterval(speedState.timer);
   speedState.timer = null;
   if (speedState.score > 0) recordStudyActivity();
-  $('[data-speed-timer]').textContent = 'Done';
+  $('[data-speed-timer]').textContent = language === 'fr' ? 'Terminé' : 'Done';
   $('[data-speed-feedback]').textContent = `Course terminée : ${speedState.score} bonne(s) réponse(s).`;
   showSessionSummary({
     mode: 'speed',
     correct: speedState.score,
-    total: Math.max(speedState.score, 1),
-    errors: Math.max(0, speedState.score === 0 ? 1 : 0),
+    total: speedState.attempts,
+    errors: speedState.attempts - speedState.score,
     badges: [
       { label: 'Bonnes réponses', value: speedState.score },
       { label: 'Temps restant', value: `${speedState.remaining}s` },
@@ -693,7 +697,7 @@ function finishSpeed() {
 }
 
 function startFill() {
-  fillState = { round: 1, total: Math.min(deck.length, 8), queue: freshPairQueue('fill') };
+  fillState = { round: 1, total: Math.min(deck.length, 8), score: 0, queue: freshPairQueue('fill') };
   nextFillQuestion();
   showScreen('fill');
 }
@@ -795,6 +799,7 @@ function checkFill(event) {
   if (!fillState.pair) return;
   const answer = $('#fill-answer').value.trim();
   const correct = isAnswerCorrect(answer, fillState.pair.term);
+  if (correct) fillState.score += 1;
   if (correct) recordStudyActivity();
   $('[data-fill-feedback]').textContent = correct ? 'Correct. Bonne mémoire !' : `Pas tout à fait. La réponse était ${fillState.pair.term}.`;
   $('#fill-answer').disabled = true;
@@ -803,8 +808,7 @@ function checkFill(event) {
   $('[data-action="fill-next"]').textContent = fillState.round >= fillState.total ? 'Rejouer  →' : 'Extrait suivant  →';
   if (fillState.round >= fillState.total) {
     const total = fillState.total;
-    const score = Number(fillState.score || 0) + (correct ? 1 : 0);
-    fillState.score = score;
+    const score = fillState.score;
     showSessionSummary({
       mode: 'fill',
       correct: score,

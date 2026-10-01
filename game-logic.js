@@ -12,6 +12,17 @@ export function isAnswerCorrect(input, expected) {
   return normalizeForComparison(input) === normalizeForComparison(expected);
 }
 
+export function summarizeAnswers(correct, total) {
+  const totalAnswers = Math.max(0, Math.floor(Number(total) || 0));
+  const correctAnswers = Math.min(totalAnswers, Math.max(0, Math.floor(Number(correct) || 0)));
+  return {
+    correct: correctAnswers,
+    total: totalAnswers,
+    errors: totalAnswers - correctAnswers,
+    percentage: totalAnswers ? Math.round((correctAnswers / totalAnswers) * 100) : 0
+  };
+}
+
 export function clozePassage(pair, language = 'fr') {
   const term = String(pair?.term || '').trim();
   const definition = String(pair?.definition || '').trim();
