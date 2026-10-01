@@ -81,6 +81,8 @@ if (!Array.isArray(notificationHistory)) notificationHistory = [];
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
+const localize = (french, english) => language === 'fr' ? french : english;
+const displayedNickname = () => nickname === 'Study player' || nickname === 'Joueur' ? localize('Joueur', 'Study player') : nickname;
 
 function avatarUrl(choiceId) {
   const choice = avatarChoices[choiceId] || avatarChoices['adventurer-01'];
@@ -134,7 +136,7 @@ function updateDailyChallenge() {
   $('[data-daily-tag]').textContent = tag;
   $('[data-daily-title]').textContent = title;
   $('[data-daily-description]').textContent = description;
-  $('[data-daily-questions]').textContent = challenge.mode === 'memory' ? '6 cartes' : '1 défi';
+  $('[data-daily-questions]').textContent = challenge.mode === 'memory' ? localize('6 cartes', '6 cards') : localize('1 défi', '1 challenge');
   $('[data-daily-xp]').textContent = `+${challenge.xp} XP`;
 }
 
@@ -193,9 +195,15 @@ function escapeHTML(value) {
 function renderNotifications() {
   const list = $('[data-notification-list]');
   if (!notificationHistory.length) {
-    list.innerHTML = '<div class="notification-empty"><span>✦</span><strong>Aucune notification</strong><small>Les réussites et récompenses apparaîtront ici.</small></div>';
+    list.innerHTML = `<div class="notification-empty"><span>✦</span><strong>${localize('Aucune notification', 'No notifications')}</strong><small>${localize('Les réussites et récompenses apparaîtront ici.', 'Your achievements and rewards will appear here.')}</small></div>`;
   } else {
-    list.innerHTML = notificationHistory.map((notification) => `<div class="notification-item"><span class="notification-item-icon">${escapeHTML(notification.icon || '✦')}</span><div><strong>${escapeHTML(notification.message)}</strong><small>${new Date(notification.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></div></div>`).join('');
+    const locale = language === 'fr' ? 'fr-FR' : 'en-US';
+    list.innerHTML = notificationHistory.map((notification) => {
+      const message = language === 'en'
+        ? notification.message.replace(/Niveau (\d+)/g, 'Level $1').replace('Notifications du navigateur activées.', 'Browser notifications enabled.')
+        : notification.message.replace(/Level (\d+)/g, 'Niveau $1').replace('Browser notifications enabled.', 'Notifications du navigateur activées.');
+      return `<div class="notification-item"><span class="notification-item-icon">${escapeHTML(notification.icon || '✦')}</span><div><strong>${escapeHTML(message)}</strong><small>${new Date(notification.date).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></div></div>`;
+    }).join('');
   }
   $('.notification-dot').style.display = notificationHistory.length ? 'block' : 'none';
 }
@@ -288,8 +296,8 @@ async function loadProgress() {
   if (!authToken) { showAuth(); return; }
   try {
     const response = await fetch('/api/progress', { headers: { Authorization: `Bearer ${authToken}` } });
-    if (response.status === 401) throw new Error('Session expirée.');
-    if (!response.ok) throw new Error('Synchronisation indisponible.');
+    if (response.status === 401) throw new Error(localize('Session expirée.', 'Session expired.'));
+    if (!response.ok) throw new Error(localize('Synchronisation indisponible.', 'Sync is unavailable.'));
     const remote = await response.json();
     if (remote) {
       nickname = typeof remote.nickname === 'string' ? remote.nickname : nickname;
@@ -302,7 +310,7 @@ async function loadProgress() {
     } else syncProgress();
     applyLanguage();
     $('#nickname-input').value = nickname === 'Study player' ? '' : nickname;
-    $('[data-profile-name]').textContent = nickname;
+    $('[data-profile-name]').textContent = displayedNickname();
     renderAvatars();
     updateDeckLabels();
     updateDailyChallenge();
@@ -310,12 +318,122 @@ async function loadProgress() {
   } catch {
     authToken = '';
     localStorage.removeItem('recall-rally-access-token');
-    $('[data-auth-feedback]').textContent = 'Session expirée. Reconnecte-toi pour continuer.';
+    $('[data-auth-feedback]').textContent = localize('Session expirée. Reconnecte-toi pour continuer.', 'Session expired. Sign in again to continue.');
     showAuth();
   }
 }
 
+function translateInterfaceEnglish() {
+  const setText = (selector, text) => { const element = $(selector); if (element) element.textContent = text; };
+  const setMany = (selector, texts) => $$(selector).forEach((element, index) => { element.textContent = texts[index] || ''; });
+  setText('.welcome-row .eyebrow', 'Your learning space');
+  setText('.section-heading:not(.compact) .eyebrow', 'Your next move');
+  setText('.section-heading:not(.compact) h2', 'Daily quest');
+  setText('.quest-card .tag', 'Astronomy');
+  setText('.quest-card h3', 'Orbit Check');
+  setText('.quest-card p', 'Can you tell a planet from a dwarf?');
+  setText('.quest-card .play-link', 'Play quest ↗');
+  setText('.section-heading.compact .eyebrow', 'Your study kit');
+  setText('.section-heading.compact h2', 'Play your way');
+  setText('.section-heading.compact .text-button', 'Manage');
+  setText('.deck-summary small', `${deck.length} terms ready to turn into games`);
+  setMany('.mode-card strong', ['Memory match', 'Hangman', 'Duel', 'Speed race', 'Course cloze', 'Flashcards']);
+  setMany('.mode-card small', ['Pair term + meaning', 'Reveal the answer', 'Challenge a friend', 'Beat the clock', 'Complete the lesson excerpt', 'Classic review']);
+  setText('.library-screen .eyebrow', 'Build your study kit');
+  setText('.library-screen h1', 'Add a document');
+  setText('.library-screen .library-intro', 'Bring your notes, then we’ll turn each term and definition into a game.');
+  setText('.upload-drop strong', 'Choose a document');
+  setText('.upload-drop small', 'TXT, MD, CSV, PDF, DOCX, or Pages · up to 5 MB');
+  setText('.or-divider span', 'or paste your notes');
+  setText('.library-actions .text-button', 'Clear');
+  setText('.format-note', 'One pair per line. Separate the term and definition with `:`, ` - `, or a comma.');
+  setText('[data-action="create-deck"]', 'Create study kit →');
+  setText('[data-action="create-ai-deck"]', '✦ Build with AI');
+  setText('.ai-limit-note', 'Gemini: 10 generations per day per account.');
+  setText('.sample-note strong', 'Need a starting point?');
+  setText('[data-action="load-sample"]', 'Load the space basics sample');
+  setText('.modes-screen .eyebrow', 'Choose a challenge');
+  setText('.modes-screen .library-intro', `${deck.length} terms are ready. Every game uses your study kit.`);
+  setMany('.mode-list-item strong', ['Memory match', 'Hangman', 'Duel mode', 'Speed race', 'Course cloze', 'Flashcards']);
+  setMany('.mode-list-item small', ['Match each term to its definition', 'Guess the letters in each term', 'Take turns and beat your friend', 'Answer as many as you can in 30 seconds', 'Complete a lesson excerpt', 'Review term after term']);
+  setText('[data-screen="memory"] .eyebrow', 'Memory match');
+  setText('[data-screen="memory"] h2', 'Find the pair');
+  setText('[data-screen="memory"] .game-instruction', 'Match each term with its definition.');
+  setText('[data-screen="hangman"] .game-header .eyebrow', 'Hangman');
+  setText('[data-screen="hangman"] h2', 'Reveal the term');
+  setText('[data-screen="hangman"] .hangman-card .eyebrow', 'Definition');
+  setText('[data-screen="hangman"] .hangman-next', 'Next term →');
+  setText('[data-screen="duel"] .game-header .eyebrow', 'Duel');
+  setText('[data-screen="duel"] h2', 'Pass the phone');
+  setText('[data-screen="duel"] .duel-question .eyebrow', 'Which term matches?');
+  setMany('.duel-score small', ['PLAYER 1', 'PLAYER 2']);
+  setText('[data-screen="speed"] .game-header .eyebrow', 'Speed race');
+  setText('[data-screen="speed"] h2', 'Beat the clock');
+  setText('[data-screen="speed"] .speed-question .eyebrow', 'Choose the matching term');
+  setText('[data-action="start-speed"]', 'Start race →');
+  setText('[data-screen="fill"] .game-header .eyebrow', 'Course cloze');
+  setText('[data-screen="fill"] .fill-card .eyebrow', 'From your course');
+  setText('[data-screen="fill"] h2', 'Complete the excerpt');
+  setText('[data-screen="fill"] .fill-form label', 'What belongs in the blank?');
+  setText('[data-screen="fill"] .fill-input-row button', 'Check');
+  $('#fill-answer').placeholder = 'Type the missing concept';
+  setText('[data-action="fill-next"]', 'Next excerpt →');
+  setText('[data-screen="flashcards"] .game-header .eyebrow', 'Flashcards');
+  setText('[data-screen="flashcards"] h2', 'Classic review');
+  setText('[data-flashcard-label]', 'Term');
+  setText('[data-action="flashcard-reveal"]', 'Reveal answer');
+  setText('[data-action="flashcard-next"]', 'Next card →');
+  setText('[data-action="flashcard-again"]', 'Again');
+  setText('[data-action="flashcard-known"]', 'Known');
+  setText('[data-summary-label]', 'Session');
+  setText('[data-summary-title]', 'Good job');
+  $$('.summary-metrics small').forEach((element, index) => { element.textContent = ['Correct', 'Errors', 'Accuracy'][index]; });
+  setText('[data-action="summary-home"]', 'Back to home →');
+  setText('.topics-screen .section-heading .eyebrow', 'Choose your lane');
+  setText('.topics-screen h1', 'All topics');
+  setMany('.topic-list-item strong', ['History', 'Science', 'Language']);
+  setMany('.topic-list-item small', ['12 quests · 480 XP available', '8 quests · 320 XP available', '15 quests · 600 XP available']);
+  setText('.profile-heading .eyebrow', 'Your space');
+  setText('.profile-heading h1', 'Profile');
+  setText('[data-profile-name]', displayedNickname());
+  setText('.settings-heading .eyebrow', 'Preferences');
+  setText('.settings-heading h2', 'Settings');
+  setText('.avatar-setting strong', 'Avatar');
+  setText('.avatar-setting small', 'Choose one of eight fixed characters');
+  setText('.nickname-setting strong', 'Display name');
+  setText('.nickname-setting small', 'Shown on your local profile');
+  $('#nickname-input').placeholder = 'Your name';
+  setText('[data-action="save-nickname"]', 'Save');
+  setText('.support-setting strong', 'Contact support');
+  setText('.support-setting small', 'Need help or want to report a bug?');
+  setText('.support-button', 'Email us');
+  setText('[data-setting="app-notifications"] strong', 'App notifications');
+  setText('[data-setting="app-notifications"] small', 'Show feedback and daily reminders inside Recall Rally');
+  setText('[data-action="toggle-app-notifications"]', appNotificationsEnabled ? 'On' : 'Off');
+  $('[data-action="toggle-app-notifications"]').classList.toggle('active', appNotificationsEnabled);
+  $('[data-action="toggle-app-notifications"]').setAttribute('aria-pressed', String(appNotificationsEnabled));
+  setText('[data-setting="browser-notifications"] strong', 'Browser notifications');
+  setText('[data-setting="browser-notifications"] small', 'Allow Recall Rally to notify you in this browser');
+  setText('[data-action="enable-browser-notifications"]', 'Enable');
+  setText('.notification-drawer-header .eyebrow', 'Recent activity');
+  setText('.notification-drawer-header h2', 'Notifications');
+  setText('[data-auth-title]', authMode === 'login' ? 'Sign in' : 'Create an account');
+  setText('[data-auth-copy]', authMode === 'login' ? 'Sign in to find your progress on all your devices.' : 'Create an account to save your progress online.');
+  setText('[data-auth-submit]', authMode === 'login' ? 'Sign in' : 'Create account');
+  setText('[data-action="toggle-auth"]', authMode === 'login' ? 'Create an account' : 'I already have an account');
+  setText('.auth-form label[for="auth-password"]', 'Password');
+  setText('[data-motivation-eyebrow]', 'Your moment starts now');
+  setText('[data-motivation-quote]', 'Every small step counts.');
+  setText('[data-motivation-subtitle]', 'You’re back. Let’s make it count!');
+  setText('[data-motivation-cta]', 'Continue');
+  $('[data-motivation-image]').setAttribute('aria-label', 'An isometric illustration of a notebook and study cards');
+  $('[data-action="close-motivation"]').setAttribute('aria-label', 'Close');
+  updateStreakUI();
+  updateProgressUI();
+}
+
 function translateInterface() {
+  if (language === 'en') { translateInterfaceEnglish(); return; }
   const setText = (selector, text) => { const element = $(selector); if (element) element.textContent = text; };
   const setMany = (selector, texts) => $$(selector).forEach((element, index) => { if (texts[index]) element.textContent = texts[index]; });
   setText('.add-material-button', '+ Ajouter');
@@ -336,7 +454,7 @@ function translateInterface() {
   setMany('.mode-card small', ['Associe terme et définition', 'Révèle la réponse', 'Défie un ami', 'Bats le chrono', "Complète l'extrait du cours", 'Révise avec des cartes']);
   setText('.library-screen .eyebrow', 'Construis ta fiche');
   setText('.library-screen h1', 'Ajouter un document');
-  setText('.library-intro', 'Ajoute ton cours : nous transformerons chaque notion en jeu.');
+  setText('.library-screen .library-intro', 'Ajoute ton cours : nous transformerons chaque notion en jeu.');
   setText('.upload-drop strong', 'Choisir un document');
   setText('.upload-drop small', 'TXT, MD, CSV, PDF, DOCX ou Pages · 5 Mo maximum');
   setText('.or-divider span', 'ou colle tes notes');
@@ -350,6 +468,18 @@ function translateInterface() {
   setText('.modes-screen .library-intro', `${deck.length} notions sont prêtes. Tous les jeux utilisent ta fiche.`);
   setMany('.mode-list-item strong', ['Memory', 'Pendu', 'Duel', 'Course express', 'Texte à trous', 'Cartes mémoire']);
   setMany('.mode-list-item small', ['Associe chaque terme à sa définition', 'Devine les lettres du terme', 'Joue à tour de rôle avec un ami', 'Réponds en 30 secondes', 'Complète un extrait du cours', 'Révise terme après terme']);
+  setText('.topics-screen .section-heading .eyebrow', 'Choisis ton parcours');
+  setText('.topics-screen h1', 'Tous les thèmes');
+  setMany('.topic-list-item strong', ['Histoire', 'Sciences', 'Langues']);
+  setMany('.topic-list-item small', ['12 défis · 480 XP disponibles', '8 défis · 320 XP disponibles', '15 défis · 600 XP disponibles']);
+  setText('.quiz-top span:first-of-type', 'Orbite express');
+  setText('.question-meta span:first-child', 'QUESTION 1 SUR 5');
+  setText('.question-card .eyebrow', 'Astronomie / Échauffement');
+  const quizTitle = $('.question-card h2');
+  if (quizTitle) quizTitle.innerHTML = 'Quel objet<br /><em>n’est pas</em> une planète ?';
+  setText('.question-hint', 'Respire un bon coup. Tu vas y arriver.');
+  $$('.answer').forEach((button, index) => { button.lastChild.textContent = ['Mercure', 'Pluton', 'Mars', 'Vénus'][index]; });
+  setText('.continue-button', 'Choisis une réponse');
   setText('[data-screen="memory"] .eyebrow', 'Memory');
   setText('[data-screen="memory"] h2', 'Trouve les paires');
   setText('[data-screen="memory"] .game-instruction', 'Associe chaque terme à sa définition.');
@@ -359,6 +489,7 @@ function translateInterface() {
   setText('[data-screen="duel"] .eyebrow', 'Duel');
   setText('[data-screen="duel"] h2', 'Passe le téléphone');
   setText('[data-screen="duel"] .duel-question .eyebrow', 'Quel terme correspond ?');
+  setMany('.duel-score small', ['JOUEUR 1', 'JOUEUR 2']);
   setText('[data-screen="speed"] .eyebrow', 'Course express');
   setText('[data-screen="speed"] h2', 'Bats le chrono');
   setText('[data-screen="speed"] .speed-question .eyebrow', 'Choisis le terme correspondant');
@@ -375,7 +506,7 @@ function translateInterface() {
   setText('.profile-heading .eyebrow', 'Ton espace');
   setText('.profile-heading h1', 'Profil');
   setText('.profile-card strong', 'Joueur');
-  setText('[data-profile-name]', nickname);
+  setText('[data-profile-name]', displayedNickname());
   updateProgressUI();
   setText('.avatar-setting strong', 'Avatar');
   setText('.avatar-setting small', 'Choisis un personnage DiceBear pour ton profil');
@@ -395,12 +526,36 @@ function translateInterface() {
   setText('[data-setting="browser-notifications"] strong', 'Notifications du navigateur');
   setText('[data-setting="browser-notifications"] small', 'Autoriser les notifications dans ce navigateur');
   setText('[data-action="enable-browser-notifications"]', 'Autoriser');
+  setText('.support-setting strong', 'Contacter le support');
+  setText('.support-setting small', 'Besoin d’aide ou envie de signaler un bug ?');
+  setText('.support-button', 'Nous écrire');
+  setText('.notification-drawer-header .eyebrow', 'Activité récente');
+  setText('.notification-drawer-header h2', 'Notifications');
+  setText('[data-summary-title]', 'Bravo');
+  setText('[data-motivation-eyebrow]', 'Ton moment commence maintenant');
+  setText('[data-motivation-quote]', 'Chaque petit pas compte.');
+  setText('[data-motivation-subtitle]', 'Tu es de retour. À toi de jouer !');
+  setText('[data-motivation-cta]', 'Continuer');
+  $('[data-motivation-image]').setAttribute('aria-label', 'Illustration d’un carnet et de fiches de révision en perspective');
+  $('[data-action="close-motivation"]').setAttribute('aria-label', 'Fermer');
 }
 
 function applyLanguage() {
   document.documentElement.lang = language;
-  if (language === 'fr') translateInterface();
+  translateInterface();
+  $('[data-action="toggle-notifications"]').setAttribute('aria-label', localize('Ouvrir les notifications', 'Open notifications'));
+  $('[data-action="toggle-notifications"]').setAttribute('title', localize('Notifications', 'Notifications'));
+  $('.bottom-nav').setAttribute('aria-label', localize('Navigation principale', 'Main navigation'));
   $$('[data-language]').forEach((button) => button.classList.toggle('active', button.dataset.language === language));
+  renderNotifications();
+}
+
+function showMotivation() {
+  const messages = language === 'fr'
+    ? ['Chaque petit pas compte.', 'Tu es capable de plus que tu ne le crois.', 'La régularité fait les grandes réussites.', 'Une notion à la fois, tu avances.']
+    : ['Every small step counts.', 'You are capable of more than you think.', 'Consistency builds great things.', 'One idea at a time, you are moving forward.'];
+  $('[data-motivation-quote]').textContent = messages[Math.floor(Math.random() * messages.length)];
+  $('[data-motivation-dialog]').showModal();
 }
 
 function showSessionSummary(summary) {
@@ -412,7 +567,7 @@ function showSessionSummary(summary) {
     speed: french ? { label: 'Course express', title: 'Course terminée' } : { label: 'Speed race', title: 'Race complete' },
     fill: french ? { label: 'Texte à trous', title: 'Extrait terminé' } : { label: 'Course cloze', title: 'Excerpt complete' },
     flashcards: french ? { label: 'Cartes mémoire', title: 'Révision terminée' } : { label: 'Flashcards', title: 'Review complete' }
-  }[summary.mode] || { label: 'Jeu', title: 'Session terminée' };
+  }[summary.mode] || (french ? { label: 'Jeu', title: 'Session terminée' } : { label: 'Game', title: 'Session complete' });
   const { total, correct, errors, percentage } = summarizeAnswers(summary.correct, summary.total);
   summaryState = { ...summary, total, correct, errors, percentage };
   $('[data-summary-label]').textContent = config.label;
@@ -431,7 +586,8 @@ function showSessionSummary(summary) {
     { label: french ? 'Erreurs' : 'Errors', value: errors },
     { label: 'Score', value: `${correct} pts` }
   ];
-  list.innerHTML = items.map((item) => `<div class="summary-item"><span>${escapeHTML(item.label)}</span><strong>${escapeHTML(String(item.value))}</strong></div>`).join('');
+  const badgeLabels = { 'Paires trouvées': 'Pairs found', 'Bonnes réponses': 'Correct answers', 'Erreurs': 'Errors', 'Joueur 1': 'Player 1', 'Joueur 2': 'Player 2', 'Vainqueur': 'Winner', 'Temps restant': 'Time left', 'Connus': 'Known', 'À revoir': 'To review' };
+  list.innerHTML = items.map((item) => `<div class="summary-item"><span>${escapeHTML(!french ? badgeLabels[item.label] || item.label : item.label)}</span><strong>${escapeHTML(String(item.value))}</strong></div>`).join('');
   $('[data-action="summary-home"]').innerHTML = `${french ? 'Retour à l’accueil' : 'Back to home'} <span>→</span>`;
   $('[data-screen="summary"] [data-action="go-home"]').setAttribute('aria-label', french ? 'Retour à l’accueil' : 'Back to home');
   showScreen('summary');
@@ -453,7 +609,7 @@ function updateImportPreview() {
     return;
   }
   if (feedback) {
-    feedback.textContent = `${pairs.length} notion${pairs.length > 1 ? 's' : ''} détectée${pairs.length > 1 ? 's' : ''}.`;
+    feedback.textContent = language === 'fr' ? `${pairs.length} notion${pairs.length > 1 ? 's' : ''} détectée${pairs.length > 1 ? 's' : ''}.` : `${pairs.length} pair${pairs.length > 1 ? 's' : ''} found.`;
   }
 }
 
@@ -492,7 +648,7 @@ function startMemory() {
   ]));
   $('[data-memory-counter]').textContent = `0 / ${memoryCards.length / 2}`;
   $('[data-memory-feedback]').textContent = '';
-  $('[data-memory-grid]').innerHTML = memoryCards.map((card) => `<button class="memory-card" data-card-id="${card.id}" aria-label="Carte retournée"><span class="memory-back">✦</span><span class="memory-kind">${card.type === 'term' ? 'TERME' : 'DÉFINITION'}</span><strong>${escapeHTML(card.text)}</strong></button>`).join('');
+  $('[data-memory-grid]').innerHTML = memoryCards.map((card) => `<button class="memory-card" data-card-id="${card.id}" aria-label="${localize('Carte retournée', 'Face-down card')}"><span class="memory-back">✦</span><span class="memory-kind">${card.type === 'term' ? localize('TERME', 'TERM') : localize('DÉFINITION', 'DEFINITION')}</span><strong>${escapeHTML(card.text)}</strong></button>`).join('');
   $$('.memory-card').forEach((card) => card.addEventListener('click', () => chooseMemory(card)));
   showScreen('memory');
 }
@@ -509,7 +665,7 @@ function chooseMemory(element) {
     const matches = $$('.memory-card.matched').length / 2;
     const totalPairs = memoryCards.length / 2;
     $('[data-memory-counter]').textContent = `${matches} / ${totalPairs}`;
-    $('[data-memory-feedback]').textContent = matches === totalPairs ? 'Fiche maîtrisée. Bravo !' : 'Paire trouvée.';
+    $('[data-memory-feedback]').textContent = matches === totalPairs ? localize('Fiche maîtrisée. Bravo !', 'Study kit mastered. Great job!') : localize('Paire trouvée.', 'Pair found.');
     if (matches === totalPairs) {
       recordStudyActivity();
       showSessionSummary({
@@ -526,7 +682,7 @@ function chooseMemory(element) {
     }
     memorySelection = [];
   } else {
-    $('[data-memory-feedback]').textContent = 'Ces deux cartes ne vont pas ensemble.';
+    $('[data-memory-feedback]').textContent = localize('Ces deux cartes ne vont pas ensemble.', 'Those cards do not match.');
     setTimeout(() => { first.element.classList.remove('flipped'); second.element.classList.remove('flipped'); memorySelection = []; }, 650);
   }
 }
@@ -546,12 +702,12 @@ function renderHangman() {
   const finished = solved || hangmanState.tries === 0;
   $('[data-hangman-definition]').textContent = hangmanState.pair.definition;
   $('[data-hangman-word]').innerHTML = [...answer].map((letter) => letter === ' ' ? '<i class="word-space"></i>' : `<span>${guessed.has(normalizeForComparison(letter)) ? escapeHTML(letter) : '_'}</span>`).join('');
-  $('[data-hangman-counter]').textContent = `${hangmanState.round} / ${hangmanState.total} · ${hangmanState.tries} essais`;
-  $('[data-hangman-status]').textContent = solved ? 'Correct !' : (hangmanState.tries === 0 ? `La réponse était ${hangmanState.pair.term}.` : '');
+  $('[data-hangman-counter]').textContent = `${hangmanState.round} / ${hangmanState.total} · ${hangmanState.tries} ${localize('essais', 'tries')}`;
+  $('[data-hangman-status]').textContent = solved ? localize('Correct !', 'Correct!') : (hangmanState.tries === 0 ? localize(`La réponse était ${hangmanState.pair.term}.`, `The answer was ${hangmanState.pair.term}.`) : '');
   if (solved && !hangmanState.roundRewarded) { hangmanState.score += 1; hangmanState.roundRewarded = true; recordStudyActivity(); }
   const next = $('[data-action="hangman-next"]');
   next.hidden = !finished;
-  next.textContent = hangmanState.round >= hangmanState.total ? 'Voir le résultat  →' : 'Terme suivant  →';
+  next.textContent = hangmanState.round >= hangmanState.total ? localize('Voir le résultat  →', 'See results  →') : localize('Terme suivant  →', 'Next term  →');
   $$('.letter-button').forEach((button) => { button.disabled = guessed.has(normalizeForComparison(button.textContent)); });
 }
 
@@ -568,8 +724,8 @@ function buildLetters() {
 
 function nextHangmanRound() {
   if (hangmanState.round >= hangmanState.total && !hangmanState.summaryShown) {
-    $('[data-hangman-status]').textContent = `Partie terminée : ${hangmanState.score} / ${hangmanState.total} bonne(s) réponse(s).`;
-    $('[data-action="hangman-next"]').textContent = 'Rejouer  →';
+    $('[data-hangman-status]').textContent = localize(`Partie terminée : ${hangmanState.score} / ${hangmanState.total} bonne(s) réponse(s).`, `Game over: ${hangmanState.score} / ${hangmanState.total} correct answers.`);
+    $('[data-action="hangman-next"]').textContent = localize('Rejouer  →', 'Play again  →');
     hangmanState.summaryShown = true;
     showSessionSummary({
       mode: 'hangman',
@@ -605,6 +761,7 @@ function nextDuelQuestion() {
 
 function startDuel() {
   duelState = { player: 1, scoreOne: 0, scoreTwo: 0, queue: freshPairQueue('duel'), rounds: 0, target: Math.min(Math.max(deck.length, 5), 8) };
+  $('[data-duel-turn]').textContent = localize('Joueur 1', 'Player 1');
   $('[data-score-one]').textContent = '0';
   $('[data-score-two]').textContent = '0';
   $('[data-duel-feedback]').textContent = '';
@@ -620,7 +777,7 @@ function answerDuel(button) {
   button.classList.add(correct ? 'correct' : 'wrong');
   $('[data-score-one]').textContent = duelState.scoreOne;
   $('[data-score-two]').textContent = duelState.scoreTwo;
-  $('[data-duel-feedback]').textContent = correct ? `Point pour le joueur ${duelState.player} !` : `La réponse était ${duelState.pair.term}.`;
+  $('[data-duel-feedback]').textContent = correct ? localize(`Point pour le joueur ${duelState.player} !`, `Point for player ${duelState.player}!`) : localize(`La réponse était ${duelState.pair.term}.`, `The answer was ${duelState.pair.term}.`);
   $$('.duel-option').forEach((option) => { option.disabled = true; });
   const hasFinished = duelState.rounds >= duelState.target;
   setTimeout(() => {
@@ -641,7 +798,7 @@ function answerDuel(button) {
       });
       return;
     }
-    duelState.player = duelState.player === 1 ? 2 : 1; $('[data-duel-turn]').textContent = `Joueur ${duelState.player}`; nextDuelQuestion();
+    duelState.player = duelState.player === 1 ? 2 : 1; $('[data-duel-turn]').textContent = localize(`Joueur ${duelState.player}`, `Player ${duelState.player}`); nextDuelQuestion();
   }, 800);
 }
 
@@ -670,7 +827,7 @@ function answerSpeed(button) {
   speedState.attempts += 1;
   if (correct) speedState.score += 1;
   button.classList.add(correct ? 'correct' : 'wrong');
-  $('[data-speed-feedback]').textContent = correct ? `Bravo. ${speedState.score} bonne(s) réponse(s).` : `La réponse était ${speedState.pair.term}.`;
+  $('[data-speed-feedback]').textContent = correct ? localize(`Bravo. ${speedState.score} bonne(s) réponse(s).`, `Great! ${speedState.score} correct answer(s).`) : localize(`La réponse était ${speedState.pair.term}.`, `The answer was ${speedState.pair.term}.`);
   $$('.duel-option').forEach((option) => { option.disabled = true; });
   setTimeout(() => { if (speedState.remaining > 0) nextSpeedQuestion(); }, 350);
 }
@@ -680,7 +837,7 @@ function finishSpeed() {
   speedState.timer = null;
   if (speedState.score > 0) recordStudyActivity();
   $('[data-speed-timer]').textContent = language === 'fr' ? 'Terminé' : 'Done';
-  $('[data-speed-feedback]').textContent = `Course terminée : ${speedState.score} bonne(s) réponse(s).`;
+  $('[data-speed-feedback]').textContent = localize(`Course terminée : ${speedState.score} bonne(s) réponse(s).`, `Race over: ${speedState.score} correct answer(s).`);
   showSessionSummary({
     mode: 'speed',
     correct: speedState.score,
@@ -693,7 +850,7 @@ function finishSpeed() {
     ]
   });
   $('[data-action="start-speed"]').style.display = 'block';
-  $('[data-action="start-speed"]').textContent = 'Rejouer  →';
+  $('[data-action="start-speed"]').textContent = localize('Rejouer  →', 'Play again  →');
 }
 
 function startFill() {
@@ -730,7 +887,7 @@ function renderFlashcard() {
   $('[data-flashcard-front]').textContent = pair.term;
   $('[data-flashcard-back]').textContent = pair.definition;
   $('[data-flashcard-back]').hidden = !isRevealed;
-  $('[data-flashcard-label]').textContent = isRevealed ? 'Définition' : 'Terme';
+  $('[data-flashcard-label]').textContent = isRevealed ? localize('Définition', 'Definition') : localize('Terme', 'Term');
 }
 
 function advanceFlashcard(status) {
@@ -775,7 +932,7 @@ function maskClozeTerm(passage, term) {
     if (originalStart >= 0 && originalEnd >= 0) return `${escapeHTML(passage.slice(0, originalStart))}<span class="passage-blank">________</span>${escapeHTML(passage.slice(originalEnd))}`;
   }
   const trimmedPassage = passage.replace(/[.!?]+\s*$/, '');
-  return `${escapeHTML(trimmedPassage)}. Le concept clé à retenir est <span class="passage-blank">________</span>.`;
+  return language === 'fr' ? `${escapeHTML(trimmedPassage)}. Le concept clé à retenir est <span class="passage-blank">________</span>.` : `${escapeHTML(trimmedPassage)}. The key concept to remember is <span class="passage-blank">________</span>.`;
 }
 
 function nextFillQuestion() {
@@ -801,11 +958,11 @@ function checkFill(event) {
   const correct = isAnswerCorrect(answer, fillState.pair.term);
   if (correct) fillState.score += 1;
   if (correct) recordStudyActivity();
-  $('[data-fill-feedback]').textContent = correct ? 'Correct. Bonne mémoire !' : `Pas tout à fait. La réponse était ${fillState.pair.term}.`;
+  $('[data-fill-feedback]').textContent = correct ? localize('Correct. Bonne mémoire !', 'Correct. Nice recall!') : localize(`Pas tout à fait. La réponse était ${fillState.pair.term}.`, `Not quite. The answer was ${fillState.pair.term}.`);
   $('#fill-answer').disabled = true;
   $('[data-fill-form] button').disabled = true;
   $('[data-action="fill-next"]').hidden = false;
-  $('[data-action="fill-next"]').textContent = fillState.round >= fillState.total ? 'Rejouer  →' : 'Extrait suivant  →';
+  $('[data-action="fill-next"]').textContent = fillState.round >= fillState.total ? localize('Rejouer  →', 'Play again  →') : localize('Extrait suivant  →', 'Next excerpt  →');
   if (fillState.round >= fillState.total) {
     const total = fillState.total;
     const score = fillState.score;
@@ -835,14 +992,12 @@ function resetFillScore() {
 
 document.querySelector('[data-action="toggle-auth"]').addEventListener('click', () => {
   authMode = authMode === 'login' ? 'signup' : 'login';
-  $('[data-auth-title]').textContent = authMode === 'login' ? 'Connexion' : 'Créer un compte';
-  $('[data-auth-copy]').textContent = authMode === 'login' ? 'Connecte-toi pour retrouver tes progrès sur tous tes appareils.' : 'Crée un compte pour sauvegarder tes progrès en ligne.';
-  $('[data-auth-submit]').textContent = authMode === 'login' ? 'Se connecter' : 'Créer le compte';
-  $('[data-action="toggle-auth"]').textContent = authMode === 'login' ? 'Créer un compte' : 'J’ai déjà un compte';
   $('#auth-password').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
+  applyLanguage();
 });
 document.querySelector('[data-auth-form]').addEventListener('submit', async (event) => {
   event.preventDefault();
+  const signingIn = authMode === 'login';
   const feedback = $('[data-auth-feedback]');
   const button = $('[data-auth-submit]');
   button.textContent = '...';
@@ -851,15 +1006,17 @@ document.querySelector('[data-auth-form]').addEventListener('submit', async (eve
     const response = await fetch(`/api/auth/${authMode === 'login' ? 'login' : 'signup'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: $('#auth-email').value, password: $('#auth-password').value }) });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Authentification impossible.');
-    if (!result.access_token) { feedback.textContent = 'Compte créé. Vérifie ton email puis connecte-toi.'; authMode = 'login'; $('[data-auth-title]').textContent = 'Connexion'; $('[data-auth-submit]').textContent = 'Se connecter'; return; }
+    if (!result.access_token) { feedback.textContent = localize('Compte créé. Vérifie ton email puis connecte-toi.', 'Account created. Check your email, then sign in.'); authMode = 'login'; applyLanguage(); return; }
     authToken = result.access_token;
     localStorage.setItem('recall-rally-access-token', authToken);
     await loadProgress();
+    if (signingIn && authToken) showMotivation();
   } catch (error) {
     feedback.textContent = error.message;
-    button.textContent = authMode === 'login' ? 'Se connecter' : 'Créer le compte';
+    button.textContent = authMode === 'login' ? localize('Se connecter', 'Sign in') : localize('Créer le compte', 'Create account');
   }
 });
+$$('[data-action="close-motivation"]').forEach((button) => button.addEventListener('click', () => $('[data-motivation-dialog]').close()));
 
 $$('[data-action="open-library"]').forEach((button) => button.addEventListener('click', openLibrary));
 $$('[data-action="go-home"]').forEach((button) => button.addEventListener('click', () => showScreen('home')));
@@ -875,20 +1032,20 @@ document.querySelector('[data-action="clear-document"]').addEventListener('click
 document.querySelector('[data-action="create-deck"]').addEventListener('click', () => {
   const pairs = parseDocument($('#document-text').value);
   const feedback = $('.import-feedback');
-  if (pairs.length < 2) { feedback.textContent = 'Ajoute au moins deux notions pour créer un jeu.'; return; }
-  setDeck(pairs, $('#document-input').files[0]?.name.replace(/\.[^.]+$/, '') || 'My study kit');
-  feedback.textContent = `${pairs.length} notions prêtes. Tes jeux t'attendent.`;
+  if (pairs.length < 2) { feedback.textContent = localize('Ajoute au moins deux notions pour créer un jeu.', 'Add at least two pairs to create a game.'); return; }
+  setDeck(pairs, $('#document-input').files[0]?.name.replace(/\.[^.]+$/, '') || localize('Ma fiche', 'My study kit'));
+  feedback.textContent = localize(`${pairs.length} notions prêtes. Tes jeux t'attendent.`, `${pairs.length} pairs ready. Your games are waiting.`);
   setTimeout(openModes, 700);
 });
 document.querySelector('[data-action="create-ai-deck"]').addEventListener('click', async () => {
   const text = $('#document-text').value.trim();
   const feedback = $('.import-feedback');
   const button = $('[data-action="create-ai-deck"]');
-  if (!selectedDocumentFile && text.length < 10) { feedback.textContent = "Ajoute d'abord du contenu de cours."; return; }
+  if (!selectedDocumentFile && text.length < 10) { feedback.textContent = localize("Ajoute d'abord du contenu de cours.", 'Add some course material first.'); return; }
   button.disabled = true;
   button.classList.add('loading');
   button.innerHTML = '<span>✦</span> Génération en cours… merci de patienter.';
-  feedback.textContent = 'Génération en cours. Merci de patienter pendant la création de ta fiche…';
+  feedback.textContent = localize('Génération en cours. Merci de patienter pendant la création de ta fiche…', 'Building your study kit. Please wait…');
   try {
     const request = selectedDocumentFile ? { file: { name: selectedDocumentFile.name, type: selectedDocumentFile.type, data: await fileToBase64(selectedDocumentFile) } } : { text };
     const response = await fetch('/api/generate-deck', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(request) });
@@ -896,7 +1053,7 @@ document.querySelector('[data-action="create-ai-deck"]').addEventListener('click
     if (!response.ok) throw new Error(result.error || 'The AI request failed.');
     if (!Array.isArray(result.pairs) || result.pairs.length < 2 || result.pairs.some((pair) => !validPair(pair))) throw new Error('La réponse générée est invalide.');
     setDeck(result.pairs, result.name);
-    feedback.textContent = `${result.pairs.length} notions prêtes. Ta fiche Gemini est disponible.`;
+    feedback.textContent = localize(`${result.pairs.length} notions prêtes. Ta fiche Gemini est disponible.`, `${result.pairs.length} pairs ready. Your AI study kit is ready.`);
     button.disabled = false;
     button.classList.remove('loading');
     button.innerHTML = '<span>✦</span> Créer avec Gemini';
@@ -904,14 +1061,14 @@ document.querySelector('[data-action="create-ai-deck"]').addEventListener('click
   } catch (error) {
     const quotaReached = /Limite Gemini/i.test(error.message);
     const overloaded = !quotaReached && /high demand|overload|temporar|429|503|sollicit/i.test(error.message);
-    feedback.textContent = overloaded ? 'Gemini est momentanément très sollicité. Attends quelques secondes puis réessaie.' : error.message;
+    feedback.textContent = overloaded ? localize('Gemini est momentanément très sollicité. Attends quelques secondes puis réessaie.', 'Gemini is busy right now. Wait a few seconds, then try again.') : error.message;
     button.disabled = false;
     button.classList.remove('loading');
     button.innerHTML = '<span>✦</span> Créer avec Gemini';
   }
 });
 function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.addEventListener('load', () => resolve(reader.result.split(',')[1])); reader.addEventListener('error', reject); reader.readAsDataURL(file); }); }
-$('#document-input').addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) { selectedDocumentFile = null; return; } if (file.size > 5 * 1024 * 1024) { selectedDocumentFile = null; $('.import-feedback').textContent = 'Ce document dépasse la limite de 5 Mo.'; event.target.value = ''; return; } selectedDocumentFile = file; const textFormats = ['text/plain', 'text/markdown', 'text/csv']; if (textFormats.includes(file.type) || /\.(txt|md|csv)$/i.test(file.name)) { const reader = new FileReader(); reader.addEventListener('load', () => { $('#document-text').value = reader.result; }); reader.readAsText(file); } else { $('#document-text').value = `${file.name} selected. Click Build with AI to turn it into games.`; } });
+$('#document-input').addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) { selectedDocumentFile = null; return; } if (file.size > 5 * 1024 * 1024) { selectedDocumentFile = null; $('.import-feedback').textContent = localize('Ce document dépasse la limite de 5 Mo.', 'This file is larger than the 5 MB limit.'); event.target.value = ''; return; } selectedDocumentFile = file; const textFormats = ['text/plain', 'text/markdown', 'text/csv']; if (textFormats.includes(file.type) || /\.(txt|md|csv)$/i.test(file.name)) { const reader = new FileReader(); reader.addEventListener('load', () => { $('#document-text').value = reader.result; }); reader.readAsText(file); } else { $('#document-text').value = localize(`${file.name} sélectionné. Clique sur « Créer avec Gemini » pour le transformer en jeu.`, `${file.name} selected. Click Build with AI to turn it into games.`); } });
 $('#document-text').addEventListener('input', () => {
   selectedDocumentFile = null;
   $('#document-input').value = '';
@@ -939,7 +1096,7 @@ document.querySelector('[data-action="summary-home"]').addEventListener('click',
 
 applyLanguage();
 $('#nickname-input').value = nickname === 'Study player' ? '' : nickname;
-$('[data-profile-name]').textContent = nickname;
+$('[data-profile-name]').textContent = displayedNickname();
 $('[data-profile-avatar]').textContent = nickname.charAt(0).toUpperCase();
 $('.profile-heading .avatar').textContent = nickname.charAt(0).toUpperCase();
 renderAvatars();

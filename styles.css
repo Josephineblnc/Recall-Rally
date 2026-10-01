@@ -280,6 +280,49 @@ h2 { font-size: 23px; margin-top: 4px; } h3 { font-size: 23px; margin: 9px 0 7px
 	.flashcard-card { transition: none; }
 }
 
+.motivation-dialog {
+	position: fixed;
+	width: min(390px, calc(100% - 32px));
+	max-width: none;
+	max-height: calc(100dvh - 32px);
+	padding: 0;
+	border: 1px solid rgba(32, 35, 33, .16);
+	border-bottom: 7px solid #c85e4e;
+	border-radius: 12px;
+	background-image: linear-gradient(145deg, rgba(255, 255, 255, .42), rgba(32, 35, 33, .025)), linear-gradient(var(--white), var(--white));
+	color: var(--ink);
+	overflow: hidden;
+	box-shadow: 0 7px 0 rgba(32, 35, 33, .15), 0 20px 42px rgba(32, 35, 33, .3), inset 0 1px rgba(255, 255, 255, .8);
+	animation: motivation-pop .28s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.motivation-dialog::backdrop { background: rgba(25, 29, 27, .65); backdrop-filter: blur(3px); }
+.motivation-image { display: block; width: 100%; height: clamp(190px, 34vh, 270px); overflow: hidden; border-bottom: 5px solid var(--yellow); background: var(--coral); box-shadow: inset 0 2px rgba(255, 255, 255, .55); }
+.motivation-image svg { display: block; width: 100%; height: 100%; }
+.motivation-copy { padding: 22px; background-image: repeating-linear-gradient(135deg, rgba(32, 35, 33, .018) 0 1px, transparent 1px 6px), linear-gradient(145deg, rgba(255, 255, 255, .4), transparent 65%); box-shadow: inset 0 1px rgba(255, 255, 255, .85); }
+.motivation-copy .eyebrow { color: #ab5142; }
+.motivation-copy h2 { margin: 10px 0; font-size: 29px; line-height: 1.08; text-shadow: 0 1px rgba(255, 255, 255, .8); }
+.motivation-copy > p:last-of-type { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.motivation-copy .primary-button { margin-top: 18px; border: 1px solid rgba(32, 35, 33, .2); border-bottom: 5px solid #111412; border-radius: 8px; box-shadow: 0 5px 0 rgba(32, 35, 33, .14), inset 0 1px rgba(255, 255, 255, .16); transition: transform .16s ease, box-shadow .16s ease; }
+.motivation-copy .primary-button:hover { transform: translateY(-2px); box-shadow: 0 7px 0 rgba(32, 35, 33, .14), inset 0 1px rgba(255, 255, 255, .16); }
+.motivation-copy .primary-button:active { transform: translateY(2px); border-bottom-width: 2px; box-shadow: 0 2px 0 rgba(32, 35, 33, .14), inset 0 2px 4px rgba(0, 0, 0, .2); }
+.motivation-close { position: absolute; z-index: 1; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid rgba(32, 35, 33, .16); border-bottom: 4px solid #d8d1c4; border-radius: 50%; background: var(--white); font-size: 23px; box-shadow: 0 4px 0 rgba(32, 35, 33, .14), 0 6px 12px rgba(32, 35, 33, .18), inset 0 1px white; }
+
+@keyframes motivation-pop {
+	from { opacity: 0; transform: perspective(800px) rotateX(7deg) translateY(14px) scale(.98); }
+	to { opacity: 1; transform: perspective(800px) rotateX(0) translateY(0) scale(1); }
+}
+
+@media (max-width: 380px) {
+	.motivation-copy { padding: 18px; }
+	.motivation-copy h2 { font-size: 25px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.motivation-dialog,
+	.motivation-copy .primary-button { animation: none; transition: none; }
+}
+
 .welcome-row h1 {
 	max-width: 320px;
 	font-size: 42px;

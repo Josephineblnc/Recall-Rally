@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -180,7 +180,7 @@
         <div class="profile-card"><button class="profile-avatar avatar-button" data-profile-avatar data-action="open-avatar-picker" aria-label="Change avatar"></button><div><strong data-profile-name>Study player</strong><small data-profile-stats>7 day streak · 1,240 XP</small></div></div>
         <div class="xp-progress"><div class="xp-progress-top"><strong data-level-label>Level 1</strong><span data-xp-label>0 / 500 XP</span></div><div class="xp-track"><span data-xp-progress></span></div></div>
         <div class="settings-heading"><p class="eyebrow">Preferences</p><h2>Settings</h2></div>
-        <div class="setting-row"><div><strong>Language</strong><small>Choose the language of the interface</small></div><div class="language-toggle"><button data-language="fr">Français</button><button data-language="en">English</button></div></div>
+        <div class="setting-row language-setting"><div><strong>Language</strong><small>Choose the language of the interface</small></div><div class="language-toggle"><button data-language="fr">Français</button><button data-language="en">English</button></div></div>
         <div class="setting-row nickname-setting"><div><strong>Display name</strong><small>Shown on your local profile</small></div><div class="nickname-control"><input id="nickname-input" maxlength="24" placeholder="Your name" /><button data-action="save-nickname">Save</button></div></div>
         <div class="setting-row avatar-setting"><div><strong>Avatar</strong><small>Choose one of eight fixed characters</small></div><div class="avatar-options"><button data-avatar="robot-01" aria-label="Robot 1"></button><button data-avatar="robot-02" aria-label="Robot 2"></button><button data-avatar="robot-03" aria-label="Robot 3"></button><button data-avatar="robot-04" aria-label="Robot 4"></button><button data-avatar="adventurer-01" aria-label="Adventurer"></button><button data-avatar="pixel-01" aria-label="Pixel character"></button><button data-avatar="lorelei-01" aria-label="Lorelei character"></button><button data-avatar="fun-01" aria-label="Fun character"></button></div></div>
         <div class="setting-row support-setting"><div><strong>Contact support</strong><small>Need help or want to report a bug?</small></div><a class="support-button" href="mailto:contact.clairiastudio@gmail.com?subject=Recall%20Rally%20support">Email us</a></div>
@@ -191,6 +191,62 @@
       <nav class="bottom-nav" aria-label="Main navigation"><button class="nav-item active" data-nav="home"><span>⌂</span>Today</button><button class="nav-item" data-nav="modes"><span>✦</span>Games</button><button class="nav-item" data-nav="library"><span>＋</span>Add</button><button class="nav-item" data-nav="profile"><span>◉</span>Profile</button></nav>
     </main>
     <div class="in-app-toast" data-in-app-toast role="status" aria-live="polite"></div>
+    <dialog class="motivation-dialog" data-motivation-dialog aria-labelledby="motivation-title">
+      <button class="motivation-close" data-action="close-motivation" aria-label="Fermer">×</button>
+      <div class="motivation-image" data-motivation-image role="img" aria-label="Illustration d’un carnet et de fiches de révision en perspective">
+        <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="artSky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6a18c"/><stop offset="1" stop-color="#ec705f"/></linearGradient>
+            <linearGradient id="pageLight" x1="0" y1="0" x2="0.9" y2="1"><stop stop-color="#fffdf8"/><stop offset="1" stop-color="#e8dfcc"/></linearGradient>
+            <linearGradient id="cardMint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e1f0e5"/><stop offset="1" stop-color="#9dc8b1"/></linearGradient>
+            <pattern id="paperGrain" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M0 8.5h9" stroke="#202321" stroke-opacity=".035"/></pattern>
+            <filter id="artShadow" x="-.2" y="-.2" width="1.5" height="1.6"><feDropShadow dx="0" dy="16" stdDeviation="11" flood-color="#202321" flood-opacity=".25"/></filter>
+          </defs>
+          <rect width="800" height="500" fill="url(#artSky)"/>
+          <path d="M0 365 205 250l595 225v25H0z" fill="#df6657" opacity=".5"/>
+          <path d="m87 382 166-96 478 0-166 96z" fill="#f4d36b" opacity=".7"/>
+          <g filter="url(#artShadow)">
+            <path d="m152 342 246-140 296 168-247 142z" fill="#202321"/>
+            <path d="m152 325 246-140 296 168-247 142z" fill="#d4a941"/>
+            <path d="m169 314 229-130 278 159-229 132z" fill="#fffdf8"/>
+            <path d="m398 184 278 159v17L398 201z" fill="#ded6c6"/>
+            <path d="m169 314 229-130v17L169 331z" fill="#f5eee0"/>
+            <path d="m398 184 278 159-229 132-278-161z" fill="url(#pageLight)"/>
+            <path d="m398 184 278 159-229 132-278-161z" fill="url(#paperGrain)"/>
+            <path d="m398 184 49 291" stroke="#bcb3a3" stroke-width="3"/>
+            <path d="m204 316 162 94m-142-111 139 81m166 12 104-60m-86 77 91-53" fill="none" stroke="#9aa89e" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+            <path d="m267 298 101 58m-83-76 83 48m172 76 77-44m-63 62 93-54" fill="none" stroke="#9aa89e" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+            <path d="m398 184 11 6v17l-11-6z" fill="#ee7965"/>
+          </g>
+          <g filter="url(#artShadow)" transform="rotate(-13 245 165)">
+            <path d="m136 117 153-88 8 15-153 88z" fill="#202321"/>
+            <path d="m136 101 153-88 8 15-153 88z" fill="#c85e4e"/>
+            <rect x="143" y="55" width="147" height="177" rx="8" fill="#202321"/>
+            <rect x="143" y="46" width="147" height="177" rx="8" fill="url(#cardMint)" stroke="#fffdf8" stroke-width="5"/>
+            <path d="M164 81h67m-67 17h92m-92 17h73" stroke="#527667" stroke-width="6" stroke-linecap="round" opacity=".72"/>
+            <path d="m252 158 9 18 20 3-15 13 4 20-18-10-18 10 4-20-15-13 20-3z" fill="#ee7965" stroke="#202321" stroke-width="3" stroke-linejoin="round"/>
+          </g>
+          <g filter="url(#artShadow)" transform="rotate(12 586 153)">
+            <path d="m503 75 144 0 15 13-144 0z" fill="#202321"/>
+            <path d="m503 62 144 0 15 13-144 0z" fill="#c85e4e"/>
+            <path d="m647 62 15 13v171l-15-13z" fill="#202321"/>
+            <rect x="488" y="62" width="159" height="171" rx="8" fill="#f4d36b" stroke="#fffdf8" stroke-width="5"/>
+            <path d="M514 100h105m-105 19h77m-77 19h91" stroke="#987c35" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+            <circle cx="527" cy="183" r="17" fill="#b6d9c6" stroke="#202321" stroke-width="3"/>
+            <path d="m527 172 3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#202321"/>
+          </g>
+          <path d="m90 135 8 18 19 3-14 13 4 19-17-10-17 10 4-19-14-13 19-3z" fill="#f4d36b" stroke="#202321" stroke-width="3" stroke-linejoin="round"/>
+          <path d="m713 291 6 13 14 2-10 10 3 14-13-7-13 7 3-14-10-10 14-2z" fill="#b6d9c6" stroke="#202321" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M92 431h616" stroke="#202321" stroke-opacity=".22" stroke-width="3" stroke-dasharray="4 12"/>
+        </svg>
+      </div>
+      <div class="motivation-copy">
+        <p class="eyebrow" data-motivation-eyebrow>Ton moment commence maintenant</p>
+        <h2 id="motivation-title" data-motivation-quote>Chaque petit pas compte.</h2>
+        <p data-motivation-subtitle>Tu es de retour. À toi de jouer !</p>
+        <button class="primary-button" data-action="close-motivation"><span data-motivation-cta>Continuer</span><span>→</span></button>
+      </div>
+    </dialog>
     <script type="module" src="app.js"></script>
   </body>
 </html>
